@@ -24,12 +24,12 @@
 ### Module: WEBHOOKS
 | Title | Category | File |
 |-------|----------|------|
-| Padrão Transacional Outbox no MySQL | Architecture | [Link](./potential-adrs/must-document/WEBHOOKS/padrao-transacional-outbox-no-mysql.md) |
-| Worker Desacoplado via Polling | Architecture | [Link](./potential-adrs/must-document/WEBHOOKS/worker-desacoplado-via-polling.md) |
-| Garantia de Entrega At-Least-Once com Desduplicação por Event ID | Architecture | [Link](./potential-adrs/must-document/WEBHOOKS/garantia-entrega-at-least-once-com-desduplicacao-event-id.md) |
-| Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada | Architecture | [Link](./potential-adrs/must-document/WEBHOOKS/politica-retry-backoff-exponencial-tabela-dlq.md) |
-| Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint | Security | [Link](./potential-adrs/must-document/WEBHOOKS/autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) |
-| Reaproveitamento Integral dos Padrões da Codebase | Architecture | [Link](./potential-adrs/must-document/WEBHOOKS/reaproveitamento-padroes-codebase.md) |
+| Padrão Transacional Outbox no MySQL | Architecture | [Link](./potential-adrs/done/WEBHOOKS/padrao-transacional-outbox-no-mysql.md) |
+| Worker Desacoplado via Polling | Architecture | [Link](./potential-adrs/done/WEBHOOKS/worker-desacoplado-via-polling.md) |
+| Garantia de Entrega At-Least-Once com Desduplicação por Event ID | Architecture | [Link](./potential-adrs/done/WEBHOOKS/garantia-entrega-at-least-once-com-desduplicacao-event-id.md) |
+| Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada | Architecture | [Link](./potential-adrs/done/WEBHOOKS/politica-retry-backoff-exponencial-tabela-dlq.md) |
+| Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint | Security | [Link](./potential-adrs/done/WEBHOOKS/autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) |
+| Reaproveitamento Integral dos Padrões da Codebase | Architecture | [Link](./potential-adrs/done/WEBHOOKS/reaproveitamento-padroes-codebase.md) |
 
 ### Module: INFRA
 | Title | Category | File |
