@@ -28,6 +28,11 @@ Além desses documentos deve ser criado um documento TRACKER.md o qual deve mape
   - adr-generator: Skill apresentada no curso. Gera ADRs com base na documentação gerada pelo analyzer.
 
 ## Workflow Adotado
+
+1. Identificação dos principais temas na transcrição. Através de um prompto foi solicitado que a IA identificasse os principais temas discutidos na reunião.
+2. Geração das propostas de ADRs através da skil adr-analyzer.md.
+3. Criação das ADRs através da skill adr-generator.md
+
 como você organizou o trabalho. Em que ordem produziu os documentos, como organizou a interação com a IA
 
 ## Prompts customizados
@@ -41,9 +46,19 @@ O arquivo @TRANSCRICAO.md contém a transcrição de uma reunião entre membros 
 3. Salve o resumo em um arquivo chamado docs/adrs/must-include.md
 ```
 
+### Geração das propostas de ADRs (skill)
+
+A skill original foi invocada de forma que durante a categorização das decisões, todos os temas inclusos no arquivo `must-include.md fossem obrigatoriamente classificados como `must-document`.
+
+```
+Faça uma análise do código para identificar potenciais ADRs. Siga as orientações skill adr-analyzer.md. Ates de realizar a categorização das ADRs descrita na fase 2, leia o conteúdo do arquivo @docs/adrs/must-include.md. Os itens contidos nesse arquivo DEVEM SERMPRE ser categorizados como must-document INDEPENDENTE do score que esses itens obtiverem.
+```
+
 Pelo menos 2 prompts relevantes que você escreveu ou adaptou, mostrados em blocos de código
 
 ## Iterações e Ajustes: 
+
+Durante a coleta dos temas existentes na transcrição
 descreva os principais momentos em que a IA gerou algo errado ou superficial e você teve que corrigir. Quantas iterações principais até chegar ao resultado final
 
 ## Como Navegar a Entrega: 
