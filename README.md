@@ -64,11 +64,16 @@ Pelo menos 2 prompts relevantes que você escreveu ou adaptou, mostrados em bloc
 
 2. Saída do prompt com resultado satisfatório
 
-### Geração das ADRs Potenciais (x Iterações)
+### Geração das ADRs Potenciais (3 Iterações)
 
 1. A skill adr-analyzer não estava sendo carregada no antigravity-cli. Foi necessário a adição de aspas duplas na descrição e também caracteres de escape (\) antes das aspas contidas dentro da descrição.
 
 2. A segunda execução criou as potenciais ADRs. Etretanto, somente as ADRs do arquivo `must-include.md` foram criadas como `must-document`. Foi necessário ajuste do prompt de chamada da skill para que o processo de pontuação da skill fosse obedecido para itens que não estivessem no arquivo.
+
+3. Saída do prompt com resultado satisfatório
+
+### Geração dos ADRs
+### Geração da RFC
 
 Durante a coleta dos temas existentes na transcrição
 descreva os principais momentos em que a IA gerou algo errado ou superficial e você teve que corrigir. Quantas iterações principais até chegar ao resultado final
