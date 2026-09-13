@@ -31,6 +31,16 @@ Além desses documentos deve ser criado um documento TRACKER.md o qual deve mape
 como você organizou o trabalho. Em que ordem produziu os documentos, como organizou a interação com a IA
 
 ## Prompts customizados
+
+### Identificação dos temas técnicos na transcrição:
+```
+O arquivo @TRANSCRICAO.md contém a transcrição de uma reunião entre membros de um time de desenvolvimento. O objetivo da reunião é discutir sobre o desenvolvimento de uma feature de notificação de pedidos para um sistema de gerenciamento de pedidos. Siga os seguintes passos:
+
+1. Identifique as principais decisões técnicas discutidas na reunião.
+2. Liste das principais decisões técnicas. Use bullets com somente uma descrição resumida sobre cada item.
+3. Salve o resumo em um arquivo chamado docs/adrs/must-include.md
+```
+
 Pelo menos 2 prompts relevantes que você escreveu ou adaptou, mostrados em blocos de código
 
 ## Iterações e Ajustes: 
