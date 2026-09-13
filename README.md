@@ -51,7 +51,7 @@ O arquivo @TRANSCRICAO.md contém a transcrição de uma reunião entre membros 
 A skill original foi invocada de forma que durante a categorização das decisões, todos os temas inclusos no arquivo `must-include.md` fossem obrigatoriamente classificados como `must-document`.
 
 ```
-/adr-analyzer Faça uma análise do código para identificar potenciais ADRs. Antes de realizar a categorização das ADRs descrita na fase 2, leia o conteúdo do arquivo @docs/adrs/must-include.md. Os itens contidos nesse arquivo DEVEM SERMPRE ser categorizados como must-document INDEPENDENTE do score que esses itens obtiverem.
+/adr-analyzer Faça uma análise do código para identificar potenciais ADRs. Antes de realizar a categorização das ADRs descrita na fase 2, leia o conteúdo do arquivo @docs/adrs/must-include.md. Os itens contidos nesse arquivo DEVEM SERMPRE ser categorizados como must-document INDEPENDENTE do score que esses itens obtiverem. O restante DEVE seguir o processo de categorização definido na skill
 ```
 
 Pelo menos 2 prompts relevantes que você escreveu ou adaptou, mostrados em blocos de código
@@ -61,8 +61,14 @@ Pelo menos 2 prompts relevantes que você escreveu ou adaptou, mostrados em bloc
 ### Identificação dos temas técnicos (2 Iterações)
 
 1. Na primeira iteração o retorno foi extenso, com muitos detalhes. Foi necessário ajuste do pronpt com instruções mais claras sobre o formato de saída
+
 2. Saída do prompt com resultado satisfatório
 
+### Geração das ADRs Potenciais (x Iterações)
+
+1. A skill adr-analyzer não estava sendo carregada no antigravity-cli. Foi necessário a adição de aspas duplas na descrição e também caracteres de escape (\) antes das aspas contidas dentro da descrição.
+
+2. A segunda execução criou as potenciais ADRs. Etretanto, somente as ADRs do arquivo `must-include.md` foram criadas como `must-document`. Foi necessário ajuste do prompt de chamada da skill para que o processo de pontuação da skill fosse obedecido para itens que não estivessem no arquivo.
 
 Durante a coleta dos temas existentes na transcrição
 descreva os principais momentos em que a IA gerou algo errado ou superficial e você teve que corrigir. Quantas iterações principais até chegar ao resultado final
