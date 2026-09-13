@@ -2,6 +2,44 @@
 
 ## Descrição
 
+Conclusão do desafio para a MBA em Engenharia de Software com IA da FullCycle.
+
+## Sobre o desafio
+
+O objetivo do desafio é criar documentos de design docs para implementação de uma funcionalidade de notificações de pedidos em um sistema de gerenciamento de pedidos. 
+
+Para a criação dos documentos, deve-se utilizar das ferrameentas e conhecimentos sobre IA adquiridos no curso.
+
+Os seguintes documentos devem ser criados:
+
+- PRD (Product Requirement Document) da feature
+- RFC (Request for Comments) com a proposta técnica da solução, submetida à equipe para revisão
+- FDD (Feature Design Document) da feature
+- ADRs (Architecture Decision Records) das decisões discutidas
+
+Além desses documentos deve ser criado um documento TRACKER.md o qual deve mapear os itens contidos nos documentos a suas origens, no código e/ou na transcrição
+
+## Ferramentas de IA Utilizadas
+
+- Google Antigravity: Plataforma de desenvolvimento com agentes da google.
+- Antigravity Cli (agy): Ferramenta da google para interação com agentes do angigravity
+- Skills:
+  - adr-analyzer: Versão adaptada da skill apresentada no curso. Analisa o código da solução e gera documentação de potenciais ADRs.
+  - adr-generator: Skill apresentada no curso. Gera ADRs com base na documentação gerada pelo analyzer.
+
+## Workflow Adotado
+como você organizou o trabalho. Em que ordem produziu os documentos, como organizou a interação com a IA
+
+## Prompts customizados
+Pelo menos 2 prompts relevantes que você escreveu ou adaptou, mostrados em blocos de código
+
+## Iterações e Ajustes: 
+descreva os principais momentos em que a IA gerou algo errado ou superficial e você teve que corrigir. Quantas iterações principais até chegar ao resultado final
+
+## Como Navegar a Entrega: 
+
+caminho dos arquivos entregues e ordem sugerida de leitura 
+
 Neste desafio você vai transformar a transcrição de uma reunião técnica em um pacote completo de design docs, usando IA como ferramenta principal de produção.
 
 **Cenário:** uma empresa que opera um Order Management System (OMS) em produção vai construir uma nova feature, um Sistema de Webhooks de Notificação de Pedidos. A decisão técnica já foi tomada em uma reunião entre tech lead, PM, engenheiros e segurança, mas nada foi registrado além da transcrição da call (`TRANSCRICAO.md`).
