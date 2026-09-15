@@ -49,12 +49,7 @@ Present all evaluated options together. Each approach should be given a fair tre
 
 **Architecture:**
 
-```
-    +------------------+     +------------------+     +------------------+
-    |   Component A    |---->|   Component B    |---->|   Component C    |
-    |   (description)  |     |   (description)  |     |   (description)  |
-    +------------------+     +------------------+     +------------------+
-```
+[Use mermaid diagrams to represent the overall architecture]
 
 **Pros:**
 - [Genuine advantage]
