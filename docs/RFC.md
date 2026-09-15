@@ -4,7 +4,7 @@
 |-------|-------|
 | **Author(s)** | Larissa (Tech Lead), Bruno (Engenheiro Pleno - Time de Pedidos), Diego (Engenheiro Sênior - Time de Plataforma) |
 | **Approver(s)** | Larissa (Tech Lead), Marcos (Product Manager), Sofia (Engenheira de Segurança), Diego (Engenheiro Sênior - Time de Plataforma) |
-| **Status** | Draft |
+| **Status** | Aceito |
 | **Created** | 2026-09-13 |
 | **Last Updated** | 2026-09-15 |
 | **Team** | Time de Pedidos & Time de Plataforma |
