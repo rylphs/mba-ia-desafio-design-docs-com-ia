@@ -46,12 +46,16 @@ O arquivo @TRANSCRICAO.md contém a transcrição de uma reunião entre membros 
 3. Salve o resumo em um arquivo chamado docs/adrs/must-include.md
 ```
 
-### Geração das propostas de ADRs (skill)
+### Geração das propostas de ADRs (skill adr-analyzer)
 
 A skill original foi invocada de forma que durante a categorização das decisões, todos os temas inclusos no arquivo `must-include.md` fossem obrigatoriamente classificados como `must-document`.
 
 ```
 /adr-analyzer Faça uma análise do código para identificar potenciais ADRs. Antes de realizar a categorização das ADRs descrita na fase 2, leia o conteúdo do arquivo @docs/adrs/must-include.md. Os itens contidos nesse arquivo DEVEM SERMPRE ser categorizados como must-document INDEPENDENTE do score que esses itens obtiverem. O restante DEVE seguir o processo de categorização definido na skill
+```
+### Geração das ADRs (skill adr-generator)
+```
+/adr-generator Gere ADRs com base na lista de ADRs em potencial, entretanto gere somente para os itens que estão conditos em @docs/adrs/must-include.md Após a geração, use as informações contidas na reunião registrada em @TRANSCRICAO.md e preencha os marcadores [NEEDS INPUT].
 ```
 
 Pelo menos 2 prompts relevantes que você escreveu ou adaptou, mostrados em blocos de código
@@ -64,19 +68,22 @@ Pelo menos 2 prompts relevantes que você escreveu ou adaptou, mostrados em bloc
 
 2. Saída do prompt com resultado satisfatório
 
-### Geração das ADRs Potenciais (3 Iterações)
+### Geração das ADRs (4 Iterações)
 
 1. A skill adr-analyzer não estava sendo carregada no antigravity-cli. Foi necessário a adição de aspas duplas na descrição e também caracteres de escape (\) antes das aspas contidas dentro da descrição.
 
 2. A segunda execução criou as potenciais ADRs. Etretanto, somente as ADRs do arquivo `must-include.md` foram criadas como `must-document`. Foi necessário ajuste do prompt de chamada da skill para que o processo de pontuação da skill fosse obedecido para itens que não estivessem no arquivo.
 
-3. Saída do prompt com resultado satisfatório
+3. Geração das propostas de ADR
 
-### Geração dos ADRs
-### Geração da RFC
+4. Geração das ADRs
 
-Durante a coleta dos temas existentes na transcrição
-descreva os principais momentos em que a IA gerou algo errado ou superficial e você teve que corrigir. Quantas iterações principais até chegar ao resultado final
+### Geração da RFC (4 iterações)
+
+1. Criação da skill rfc-generator
+2. Os diagramas gerados pela skill na RFC estavam em ASCII e estavam difíceis de entender. Foi necessário alterar a skill para que os diagramas fossem gerados no formato mermaid.
+3. Alguns diagramas mermaid possuíam erros de sintaxe, foi necessário pedir ao modelo que corrigisse os erros.
+4. RFC gerada com sucesso.
 
 ## Como Navegar a Entrega: 
 
