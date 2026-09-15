@@ -1,7 +1,12 @@
 # ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID
 **Status:** Aceito
 **Data:** 2026-09-13
-**ADRs Relacionados:** ADR-001, ADR-004, ADR-005
+
+**Depends on:** [ADR-001: Padrão Transacional Outbox no MySQL](./ADR-001-padrao-transacional-outbox-no-mysql.md)
+
+**Related to:**
+- [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](./ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md)
+- [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](./ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md)
 
 ## Contexto e Definição do Problema
 

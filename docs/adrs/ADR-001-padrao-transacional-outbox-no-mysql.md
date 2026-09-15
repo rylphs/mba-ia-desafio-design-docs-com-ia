@@ -1,7 +1,15 @@
 # ADR-001: Padrão Transacional Outbox no MySQL
 **Status:** Aceito
 **Data:** 2026-09-13
-**ADRs Relacionados:** ADR-002, ADR-003, ADR-004, ADR-006
+
+**Used by:**
+- [ADR-002: Worker Desacoplado via Polling](./ADR-002-worker-desacoplado-via-polling.md)
+- [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](./ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md)
+- [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](./ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md)
+
+**Related to:**
+- [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](./ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md)
+- [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](./ADR-006-reaproveitamento-padroes-codebase.md)
 
 ## Contexto e Definição do Problema
 

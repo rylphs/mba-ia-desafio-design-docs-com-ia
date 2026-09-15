@@ -1,7 +1,13 @@
 # ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada
 **Status:** Aceito
 **Data:** 2026-09-13
-**ADRs Relacionados:** ADR-001, ADR-002, ADR-006
+
+**Depends on:** [ADR-001: Padrão Transacional Outbox no MySQL](./ADR-001-padrao-transacional-outbox-no-mysql.md)
+
+**Related to:**
+- [ADR-002: Worker Desacoplado via Polling](./ADR-002-worker-desacoplado-via-polling.md)
+- [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](./ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md)
+- [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](./ADR-006-reaproveitamento-padroes-codebase.md)
 
 ## Contexto e Definição do Problema
 

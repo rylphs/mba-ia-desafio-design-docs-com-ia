@@ -1,7 +1,11 @@
 # ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint
 **Status:** Aceito
 **Data:** 2026-09-13
-**ADRs Relacionados:** ADR-003, ADR-006
+
+**Related to:**
+- [ADR-001: Padrão Transacional Outbox no MySQL](./ADR-001-padrao-transacional-outbox-no-mysql.md)
+- [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](./ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md)
+- [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](./ADR-006-reaproveitamento-padroes-codebase.md)
 
 ## Contexto e Definição do Problema
 

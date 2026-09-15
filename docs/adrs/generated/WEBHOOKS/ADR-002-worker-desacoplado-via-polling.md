@@ -1,7 +1,12 @@
 # ADR-002: Worker Desacoplado via Polling
 **Status:** Aceito
 **Data:** 2026-09-13
-**ADRs Relacionados:** ADR-001, ADR-004
+
+**Depends on:** [ADR-001: Padrão Transacional Outbox no MySQL](./ADR-001-padrao-transacional-outbox-no-mysql.md)
+
+**Related to:**
+- [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](./ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md)
+- [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](./ADR-006-reaproveitamento-padroes-codebase.md)
 
 ## Contexto e Definição do Problema
 
