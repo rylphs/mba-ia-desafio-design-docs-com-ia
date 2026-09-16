@@ -1,6 +1,6 @@
 # Tracker de Rastreabilidade
 
-Este documento fornece a matriz de rastreabilidade completa conectando cada requisito, decisão arquitetural, restrição técnica e contrato público documentados no pacote de design docs ([docs/PRD.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/PRD.md), [docs/RFC.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/RFC.md), [docs/FDD.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/FDD.md) e [docs/adrs/](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs)) à sua respectiva fonte de origem na transcrição da reunião técnica ([TRANSCRICAO.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md)) ou no código-fonte da aplicação base (`src/` e `prisma/`).
+Este documento fornece a matriz de rastreabilidade completa conectando cada requisito, decisão arquitetural, restrição técnica e contrato público documentados no pacote de design docs ou no código-fonte da aplicação.
 
 ---
 
