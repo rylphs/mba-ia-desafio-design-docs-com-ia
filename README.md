@@ -2,17 +2,17 @@
 
 ## Sobre o Desafio
 
-O objetivo deste desafio, desenvolvido como projeto de conclusão para o **MBA em Engenharia de Software com IA da FullCycle**, é transformar a transcrição bruta de uma reunião técnica de alinhamento ([TRANSCRICAO.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md)) e a base de código funcional de um Order Management System (OMS) em um pacote completo, consistente e acionável de **Design Docs**. 
+O objetivo deste desafio é transformar a transcrição bruta de uma reunião técnica de alinhamento ([TRANSCRICAO.md](./TRANSCRICAO.md)) e a base de código funcional de um Order Management System (OMS) em um pacote completo, consistente e acionável de **Design Docs**. 
 
-O cenário retrata uma empresa que opera um sistema de pedidos em produção e precisa desenvolver uma esteira de notificações ativas (*Sistema de Webhooks de Notificação de Pedidos*) para atender a demandas críticas de clientes corporativos B2B (Atlas Comercial, MaxDistribuição e Nova Cargo), sob iminente risco de perda de contrato (*churn*). A missão foi atuar como "maestro" de ferramentas de inteligência artificial generativa, definindo a arquitetura de prompts, orquestrando skills especializadas, revisando criticamente os entregáveis e refinando cada documento até obter especificações rigorosamente alinhadas com o código existente e a discussão da reunião, sem alucinações.
+O cenário retrata uma empresa que opera um sistema de pedidos em produção e precisa desenvolver uma esteira de notificações ativas (*Sistema de Webhooks de Notificação de Pedidos*) para atender a demandas críticas de clientes corporativos B2B (Atlas Comercial, MaxDistribuição e Nova Cargo), sob iminente risco de perda de contrato (*churn*). A missão foi atuar como "maestro" de ferramentas de inteligência artificial generativa, definindo a arquitetura de prompts, orquestrando skills especializadas, revisando criticamente os entregáveis e refinando cada documento até obter especificações alinhadas com o código existente e a discussão da reunião, sem alucinações.
 
 O pacote de documentação entregue é composto por:
 - **PRD (Product Requirements Document):** Visão de produto, público-alvo, métricas de negócio quantitativas, escopo incluso e exclusões deliberadas.
 - **RFC (Request for Comments):** Proposta arquitetural para revisão do time, análise comparativa de abordagens descartadas e questões em aberto.
 - **ADRs (Architecture Decision Records):** Conjunto de 6 decisões arquiteturais isoladas, documentadas no padrão MADR com links bidirecionais.
-- **Deep Research:** Relatório aprofundado de fundamentação técnica sobre o Padrão Transacional Outbox, concorrência, criptografia HMAC-SHA256, resiliência e benchmarks de mercado (Stripe, GitHub, Shopify).
 - **FDD (Feature Design Document):** Especificação detalhada de implementação para a engenharia, contratos REST, máquina de estados, matriz de erros operacionais e integração direta com arquivos reais da base de código.
 - **TRACKER (Matriz de Rastreabilidade):** Mapeamento cruzado ligando 100% dos requisitos, decisões e contratos às suas origens na transcrição ou no código-fonte.
+- **README**: Detalhamento do processo de produção da documentação
 
 ---
 
@@ -35,15 +35,15 @@ A produção dos documentos seguiu uma sequência técnica e hierárquica estrat
 
 ```mermaid
 flowchart TD
-    TRANS["1. TRANSCRICAO.md + Código Base"] --> MUST["2. must-include.md<br/>Mapeamento de Temas Principais"]
+    TRANS["1. TRANSCRICAO.md + Código"] --> MUST["2. must-include.md<br/>Mapeamento de Temas Principais"]
     MUST --> ADRS["3. Geração de ADRs (001 a 006)<br/>skills adr-analyzer + adr-generator"]
     ADRS --> LINK["4. Linkagem Bidirecional das ADRs<br/>skill adr-linker"]
-    LINK --> RFC["5. Elaboração da RFC Técnica<br/>skill rfc-generator"]
-    RFC --> RESEARCH["6. Deep Research Técnica<br/>skill deep-research"]
-    RESEARCH --> FDD["7. Feature Design Document (FDD)<br/>Especificação Detalhada de Implementação"]
-    FDD --> PRD["8. Product Requirements Document (PRD)<br/>Consolidação de Requisitos e Negócio"]
-    PRD --> TRACKER["9. Matriz de Rastreabilidade<br/>Mapeamento em docs/TRACKER.md"]
-    TRACKER --> README["10. Consolidação do Processo no README.md"]
+    LINK --> RFC["5. Elaboração da RFC<br/>skill rfc-generator"]
+    RFC --> RESEARCH["6. Deep Research<br/>skill deep-research"]
+    RESEARCH --> FDD["7. Feature Design Document<br/> (FDD)"]
+    FDD --> PRD["8. Product Requirements Document<br/> (PRD)"]
+    PRD --> TRACKER["9. Matriz de Rastreabilidade<br/>TRACKER.md"]
+    TRACKER --> README["10. Consolidação do Processo<br/> no README.md"]
 ```
 
 1. **Extração de Temas Mandatórios:** A transcrição foi analisada para extrair os pontos não negociáveis decididos pelo time técnico, persistidos em `docs/adrs/must-include.md`.
@@ -83,7 +83,7 @@ O arquivo @TRANSCRICAO.md contém a transcrição de uma reunião entre membros 
 /deep-research Faça um pesquisa considerando o tema tratado na reunião descrita em @TRANSCRICAO.md. Para responder todas as perguntas use esse mesmo documento bem como as ADRs do projeto e também a RFC @docs/RFC.md
 ```
 
-### 5. Geração do FDD sem necessidade de entrevista interativa:
+### 5. Geração do FDD:
 ```text
 Faça a geração de um FDD para a feature descrita no documento @TRANSCRICAO.md. 
 Use o prompt abaixo, entretanto em vez de realizar a entrevista, responda todos os questionamentos com base no documento de transcrição bem como nas documentacoes do projeto presentes na pasta docs.
@@ -113,13 +113,7 @@ Durante a interação com os modelos de IA, foram necessárias intervenções de
 
 ### 4. Deep Research e Validação Arquitetural (2 Iterações)
 - **Problema:** A skill `deep-research` foi desenhada para conduzir uma entrevista interativa de até 6 perguntas com o usuário.
-- **Ajuste:** O prompt de invocação instruiu a IA a utilizar os documentos existentes (`TRANSCRICAO.md`, ADRs e RFC) como fonte direta para responder a todas as 7 dimensões do briefing, acionando a regra de encerramento antecipado com geração direta do resumo estruturado e do relatório analítico em `docs/DEEP_RESEARCH.md`. Foram formalizados os parâmetros de *Full Jitter* no retry e isolamento multi-worker.
-
-### 5. Geração do FDD, PRD e Matriz de Rastreabilidade (3 Iterações)
-- **Problema 1:** O modelo de saída do FDD exigia a não utilização de travessões (`—`) e cobria uma série de campos que demandavam exemplos funcionais de código.
-- **Ajuste 1:** Implementação de 6 contratos completos de API (incluindo rotação de chaves e replay de DLQ) e 6 caminhos de código reais auditados no repositório (`src/modules/orders/order.service.ts`, `src/config/database.ts`, etc.).
-- **Ajuste 2:** Elaboração do PRD em `docs/PRD.md` com 11 requisitos funcionais e métricas quantitativas de produto.
-- **Ajuste 3:** Construção da matriz em `docs/TRACKER.md` com 55 linhas mapeadas, atingindo $87.3\%$ de cobertura com origem em timestamps nominais da transcrição e $12.7\%$ em código-fonte real.
+- **Ajuste:** O prompt de invocação instruiu a IA a utilizar os documentos existentes (`TRANSCRICAO.md`, ADRs e RFC) como fonte direta para responder a todas os questionamentos.
 
 ---
 
@@ -129,19 +123,19 @@ Todos os artefatos foram dispostos na pasta `docs/` e na raiz do repositório, p
 
 ```
 .
-├── README.md                                    <- Relatório do processo de produção com IA
-├── TRANSCRICAO.md                               <- Transcrição original da reunião técnica
+├── README.md      <- Relatório do processo
+├── TRANSCRICAO.md 
 └── docs/
-    ├── PRD.md                                   <- Product Requirements Document (Negócio e Requisitos)
-    ├── RFC.md                                   <- Request for Comments (Proposta e Trade-offs Arquiteturais)
-    ├── FDD.md                                   <- Feature Design Document (Especificação Técnica de Implementação)
-    ├── DEEP_RESEARCH.md                         <- Pesquisa Técnica Aprofundada e Benchmarks
-    ├── TRACKER.md                               <- Matriz de Rastreabilidade (Docs <-> Transcrição / Código)
+    ├── PRD.md 
+    ├── RFC.md 
+    ├── FDD.md 
+    ├── DEEP_RESEARCH.md  <- Pesquisa Técnica
+    ├── TRACKER.md 
     └── adrs/
-        ├── README.md                            <- Índice e grafo de decisões arquiteturais
-        ├── mapping.md                           <- Mapeamento modular da codebase
-        ├── must-include.md                      <- Temas prioritários extraídos da transcrição
-        ├── potential-adrs-index.md              <- Inventário de potenciais ADRs identificadas
+        ├── README.md  <- Índice das decisões arquiteturais
+        ├── mapping.md     <- Mapeamento modular da codebase
+        ├── must-include.md <- Temas prioritários da transcrição
+        ├── potential-adrs-index.md <- Potenciais ADRs identificadas
         ├── ADR-001-padrao-transacional-outbox-no-mysql.md
         ├── ADR-002-worker-desacoplado-via-polling.md
         ├── ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md
