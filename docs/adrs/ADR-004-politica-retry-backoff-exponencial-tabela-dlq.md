@@ -67,4 +67,3 @@ O repositório dedicado de falhas permanece preservado para consulta e rastreame
 ## Referências
 
 * `src/middlewares/auth.middleware.ts:49`
-* `docs/adrs/must-include.md:8`

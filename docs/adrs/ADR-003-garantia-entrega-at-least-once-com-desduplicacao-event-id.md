@@ -66,4 +66,3 @@ Internamente, a plataforma garante a persistência imutável do identificador ú
 ## Referências
 
 * `package.json:32`
-* `docs/adrs/must-include.md:7`

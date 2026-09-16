@@ -65,4 +65,3 @@ Para garantir a correspondência exata de bytes entre o conteúdo assinado e o q
 ## Referências
 
 * `src/config/env.ts:1`
-* `docs/adrs/must-include.md:9`
