@@ -115,6 +115,10 @@ Durante a interação com os modelos de IA, foram necessárias intervenções de
 - **Problema:** A skill `deep-research` foi desenhada para conduzir uma entrevista interativa de até 6 perguntas com o usuário.
 - **Ajuste:** O prompt de invocação instruiu a IA a utilizar os documentos existentes (`TRANSCRICAO.md`, ADRs e RFC) como fonte direta para responder a todas os questionamentos.
 
+### 5. Geração do PRD (2 Iterações)
+- **Problema:** O arquivo gerado fugia um pouco à estrutura proposta no curso.
+- **Ajuste:** Novo prompt solicitando uma revisão do documento, fornecendo o template de PRD enocntrado no notion da fullcycle em [Prompt de Entrevista para Gerar PRD para desenvolvimento de Feature](https://devfullcycle.notion.site/Prompt-de-Entrevista-para-Gerar-PRD-para-desenvolvimento-de-Feature-2971423c038880f9bd94f3b46de9dd56?pvs=143)
+
 ---
 
 ## Como Navegar a Entrega
