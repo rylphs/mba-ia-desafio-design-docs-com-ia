@@ -259,15 +259,15 @@ Essa decisão está integralmente embasada e formalizada no conjunto de registro
 ## References
 
 - **Registros de Decisões de Arquitetura (ADRs do Projeto):**
-  - [ADR-001: Padrão Transacional Outbox no MySQL](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Decisão sobre persistência atômica na transação do banco relacional existente.
-  - [ADR-002: Worker Desacoplado via Polling](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Decisão sobre execução de worker independente em processo dedicado e intervalo de polling de 2 segundos.
-  - [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Decisão sobre semântica de entrega e desduplicação via cabeçalho `X-Event-Id`.
-  - [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Decisão sobre política de 5 tentativas (~15h), segregação de falhas permanentes em tabela DLQ e rota de replay com role ADMIN.
-  - [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Decisão sobre assinatura criptográfica por endpoint, rotação de 24h, limite de 64KB e obrigatoriedade de HTTPS.
-  - [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Decisão sobre reaproveitamento de componentes transversais, padrão modular (`src/modules/webhooks`) e prefixo `WEBHOOK_`.
+  - [ADR-001: Padrão Transacional Outbox no MySQL](./docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Decisão sobre persistência atômica na transação do banco relacional existente.
+  - [ADR-002: Worker Desacoplado via Polling](.docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Decisão sobre execução de worker independente em processo dedicado e intervalo de polling de 2 segundos.
+  - [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](./docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Decisão sobre semântica de entrega e desduplicação via cabeçalho `X-Event-Id`.
+  - [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](./docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Decisão sobre política de 5 tentativas (~15h), segregação de falhas permanentes em tabela DLQ e rota de replay com role ADMIN.
+  - [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](./docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Decisão sobre assinatura criptográfica por endpoint, rotação de 24h, limite de 64KB e obrigatoriedade de HTTPS.
+  - [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](.docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Decisão sobre reaproveitamento de componentes transversais, padrão modular (`src/modules/webhooks`) e prefixo `WEBHOOK_`.
 
 - **Transcrição e Insumos da Reunião Técnica:**
-  - [TRANSCRICAO.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md) — Transcrição integral da reunião de alinhamento técnico entre Larissa, Marcos, Bruno, Diego e Sofia realizada em quinta-feira às 09:00.
+  - [TRANSCRICAO.md](./TRANSCRICAO.md) — Transcrição integral da reunião de alinhamento técnico entre Larissa, Marcos, Bruno, Diego e Sofia realizada em quinta-feira às 09:00.
 
 - **Componentes e Padrões da Codebase Referenciados:**
   - `src/server.ts` — Ponto de entrada da API HTTP principal.
