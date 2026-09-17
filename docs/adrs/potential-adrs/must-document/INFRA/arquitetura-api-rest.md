@@ -24,9 +24,9 @@ This decision relates to:
 Identificou-se a decisão de estruturar a comunicação síncrona externa e interna do OMS através de uma **Arquitetura de API RESTful** sobre HTTP/JSON, com convenções rígidas de status codes HTTP, versionamento por path prefix (`/api/v1`) e um mecanismo centralizado e determinístico de tratamento e serialização de erros.
 
 A API adota:
-1. **Padrão de Resposta JSON Padronizado**: Estrutura consistente para retornos de sucesso (`data`), paginação uniforme (`meta: { page, pageSize, total, totalPages }`) via helper [`paginated`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/shared/http/response.ts#L8-L23) e payload de erro estruturado (`error: { code, message, details }`).
-2. **Hierarquia Tipada de Erros de Domínio**: Baseada em [`AppError`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/shared/errors/app-error.ts), estendida por erros específicos de semântica HTTP (`NotFoundError`, `ConflictError`, `ValidationError`, `UnauthorizedError`, `ForbiddenError`, `UnprocessableEntityError`) e de negócio (`InsufficientStockError`, `InvalidStatusTransitionError`).
-3. **Middleware Global Interceptor**: Implementado em [`src/middlewares/error.middleware.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/middlewares/error.middleware.ts), capturando de maneira transparente instâncias de `AppError`, falhas de validação de esquemas `ZodError` e violações de constraints de banco do Prisma (`P2002` conflito, `P2025` não encontrado), além de mascarar erros inesperados (500) com log estruturado e ID de correlação (`requestId`).
+1. **Padrão de Resposta JSON Padronizado**: Estrutura consistente para retornos de sucesso (`data`), paginação uniforme (`meta: { page, pageSize, total, totalPages }`) via helper [`paginated`](/src/shared/http/response.ts#L8-L23) e payload de erro estruturado (`error: { code, message, details }`).
+2. **Hierarquia Tipada de Erros de Domínio**: Baseada em [`AppError`](/src/shared/errors/app-error.ts), estendida por erros específicos de semântica HTTP (`NotFoundError`, `ConflictError`, `ValidationError`, `UnauthorizedError`, `ForbiddenError`, `UnprocessableEntityError`) e de negócio (`InsufficientStockError`, `InvalidStatusTransitionError`).
+3. **Middleware Global Interceptor**: Implementado em [`src/middlewares/error.middleware.ts`](/src/middlewares/error.middleware.ts), capturando de maneira transparente instâncias de `AppError`, falhas de validação de esquemas `ZodError` e violações de constraints de banco do Prisma (`P2002` conflito, `P2025` não encontrado), além de mascarar erros inesperados (500) com log estruturado e ID de correlação (`requestId`).
 
 ## Why This Might Deserve an ADR
 
@@ -39,13 +39,13 @@ A API adota:
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`src/app.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/app.ts#L67-L73) - Linhas 67-73
+- [`src/app.ts`](/src/app.ts#L67-L73) - Linhas 67-73
   - Montagem do roteador da API sob `/api/v1` e registro do `errorMiddleware`.
-- [`src/routes/index.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/routes/index.ts#L1-L30) - Linhas 1-30
+- [`src/routes/index.ts`](/src/routes/index.ts#L1-L30) - Linhas 1-30
   - Composição dos sub-roteadores REST (`/auth`, `/users`, `/customers`, `/products`, `/orders`).
-- [`src/shared/errors/app-error.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/shared/errors/app-error.ts#L1-L17) - Linhas 1-17
+- [`src/shared/errors/app-error.ts`](/src/shared/errors/app-error.ts#L1-L17) - Linhas 1-17
   - Classe base `AppError`.
-- [`src/middlewares/error.middleware.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/middlewares/error.middleware.ts#L14-L65) - Linhas 14-65
+- [`src/middlewares/error.middleware.ts`](/src/middlewares/error.middleware.ts#L14-L65) - Linhas 14-65
   - Interceptor global e formatador JSON de erros.
 
 ### Code Evidence
@@ -83,7 +83,7 @@ export const errorMiddleware: ErrorRequestHandler = (err, req, res, _next) => {
 
 ## Related Potential ADRs
 - [Framework Web Express.js](./framework-web-express.md)
-- [Reaproveitamento Integral dos Padrões da Codebase](../WEBHOOKS/reaproveitamento-padroes-codebase.md)
+- [Reaproveitamento Integral dos Padrões da Codebase](../../done/WEBHOOKS/reaproveitamento-padroes-codebase.md)
 
 ## Additional Notes
 Classificado automaticamente como `must-document` pela Categoria 4 (Estilo e Protocolo de API - Step 0 da skill).

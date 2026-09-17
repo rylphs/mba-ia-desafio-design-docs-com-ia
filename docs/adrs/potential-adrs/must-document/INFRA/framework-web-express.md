@@ -24,7 +24,7 @@ This decision relates to:
 
 Identificou-se a decisão de adotar o **Express.js (v4.21.1)** como o framework web HTTP primário para a construção da API REST do Order Management System (OMS).
 
-A aplicação utiliza a arquitetura funcional baseada em *application builder* (`buildApp`) e injeção de dependências modular manual através de `buildControllers(prisma)` em [`src/app.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/app.ts#L26-L76). Isso viabiliza testes de integração isolados com Supertest sem inicializar portas de rede reais.
+A aplicação utiliza a arquitetura funcional baseada em *application builder* (`buildApp`) e injeção de dependências modular manual através de `buildControllers(prisma)` em [`src/app.ts`](/src/app.ts#L26-L76). Isso viabiliza testes de integração isolados com Supertest sem inicializar portas de rede reais.
 
 O pipeline de middlewares do Express é amplamente aproveitado para:
 - Desativação do cabeçalho invasivo de tecnologia (`app.disable('x-powered-by')`).
@@ -45,11 +45,11 @@ O pipeline de middlewares do Express é amplamente aproveitado para:
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`package.json`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/package.json#L28) - Linha 28
+- [`package.json`](/package.json#L28) - Linha 28
   - Dependência principal `"express": "4.21.1"`.
-- [`src/app.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/app.ts#L1-L76) - Linhas 1-76
+- [`src/app.ts`](/src/app.ts#L1-L76) - Linhas 1-76
   - Funções `buildControllers` e `buildApp`.
-- [`src/server.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/server.ts#L1-L28) - Linhas 1-28
+- [`src/server.ts`](/src/server.ts#L1-L28) - Linhas 1-28
   - Bootstrap do servidor ouvindo na porta configurada com encerramento gracioso.
 
 ### Code Evidence
@@ -97,7 +97,7 @@ export function buildApp(deps: AppDependencies): Express {
 
 ## Related Potential ADRs
 - [Arquitetura de API REST com Tratamento Centralizado de Erros](./arquitetura-api-rest.md)
-- [Reaproveitamento Integral dos Padrões da Codebase](../WEBHOOKS/reaproveitamento-padroes-codebase.md)
+- [Reaproveitamento Integral dos Padrões da Codebase](../../done/WEBHOOKS/reaproveitamento-padroes-codebase.md)
 
 ## Additional Notes
 Classificado automaticamente como `must-document` pela Categoria 2 (Framework/Plataforma Primária - Step 0 da skill).

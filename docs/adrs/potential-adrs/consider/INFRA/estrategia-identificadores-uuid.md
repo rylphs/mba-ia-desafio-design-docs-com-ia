@@ -39,11 +39,11 @@ Essa estratégia foi expressamente ratificada na reunião técnica do sistema de
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`prisma/schema.prisma`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma#L25-L131) - Linhas 25-131
+- [`prisma/schema.prisma`](/prisma/schema.prisma#L25-L131) - Linhas 25-131
   - Modelos `User`, `Customer`, `Product`, `Order`, `OrderItem`, `OrderStatusHistory` configurados com `@default(uuid()) @db.Char(36)`.
-- [`TRANSCRICAO.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md#L302-L306) - Linhas 302-306
+- [`TRANSCRICAO.md`](/TRANSCRICAO.md#L302-L306) - Linhas 302-306
   - Alinhamento explícito entre Diego e Larissa definindo UUID para a outbox para manter conformidade com o padrão do projeto.
-- [`package.json`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/package.json#L32) - Linha 32
+- [`package.json`](/package.json#L32) - Linha 32
   - Biblioteca `uuid` v11.0.3 instalada nas dependências de produção.
 
 ### Code Evidence
@@ -84,8 +84,8 @@ model Order {
 - Qual a estratégia de validação no Zod (uso sistemático de `z.string().uuid()`)?
 
 ## Related Potential ADRs
-- [Banco de Dados Relacional MySQL 8.0](../must-document/INFRA/banco-de-dados-relacional-mysql.md)
-- [Padrão Transacional Outbox no MySQL](../must-document/WEBHOOKS/padrao-transacional-outbox-no-mysql.md)
+- [Banco de Dados Relacional MySQL 8.0](../../must-document/INFRA/banco-de-dados-relacional-mysql.md)
+- [Padrão Transacional Outbox no MySQL](../../done/WEBHOOKS/padrao-transacional-outbox-no-mysql.md)
 
 ## Additional Notes
 Avaliando os 3 E's (Estrutural, Evidente, Estável), a decisão obteve pontuação 75/150 (Escopo: 25, Custo de Mudança: 25, Conhecimento da Equipe: 25), sendo posicionada na faixa de prioridade média (`consider/`).

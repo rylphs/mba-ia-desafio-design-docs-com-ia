@@ -41,11 +41,11 @@ Para mitigar os impactos de duplicidade, a plataforma atribui a responsabilidade
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`TRANSCRICAO.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md#L146-L158) - Linhas 146-158 e 260-267
+- [`TRANSCRICAO.md`](/TRANSCRICAO.md#L146-L158) - Linhas 146-158 e 260-267
   - Diego, Sofia e Marcos acordando a garantia at-least-once com header `X-Event-Id` e delegação de idempotência ao cliente consumidor.
-- [`docs/adrs/must-include.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/must-include.md#L7) - Linha 7
+- [`docs/adrs/must-include.md`](/docs/adrs/must-include.md#L7) - Linha 7
   - Registro da decisão obrigatória na síntese técnica da reunião.
-- [`package.json`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/package.json#L32) - Linha 32
+- [`package.json`](/package.json#L32) - Linha 32
   - Dependência oficial do pacote `uuid` (v11.0.3) já integrado à aplicação.
 
 ### Code Evidence

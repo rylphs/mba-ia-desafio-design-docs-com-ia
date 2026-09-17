@@ -24,9 +24,9 @@ This decision relates to:
 
 Identificou-se a decisão de arquitetura de segurança que adota tokens **JSON Web Tokens (JWT)** assinados de forma *stateless* e um mecanismo declarativo de **Controle de Acesso Baseado em Papéis (RBAC - Role-Based Access Control)** para autenticação e autorização de usuários e operadores da API REST.
 
-As credenciais dos usuários são validadas contra hashes seguros gerados com `bcrypt` (salting rounds padrão) em [`AuthService.login`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/modules/auth/auth.service.ts#L22-L42). Em caso de sucesso, o serviço emite um token JWT contendo os claims essenciais no payload: `sub` (User ID), `email` e `role` (`ADMIN` ou `OPERATOR`), assinado com uma chave secreta simétrica (`JWT_SECRET`) e tempo de expiração (`JWT_EXPIRES_IN`).
+As credenciais dos usuários são validadas contra hashes seguros gerados com `bcrypt` (salting rounds padrão) em [`AuthService.login`](/src/modules/auth/auth.service.ts#L22-L42). Em caso de sucesso, o serviço emite um token JWT contendo os claims essenciais no payload: `sub` (User ID), `email` e `role` (`ADMIN` ou `OPERATOR`), assinado com uma chave secreta simétrica (`JWT_SECRET`) e tempo de expiração (`JWT_EXPIRES_IN`).
 
-A proteção dos endpoints é realizada por dois middlewares reutilizáveis em [`src/middlewares/auth.middleware.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/middlewares/auth.middleware.ts):
+A proteção dos endpoints é realizada por dois middlewares reutilizáveis em [`src/middlewares/auth.middleware.ts`](/src/middlewares/auth.middleware.ts):
 1. `authenticate`: Valida o cabeçalho `Authorization: Bearer <token>`, decodifica o payload e injeta os dados do usuário em `req.user`.
 2. `requireRole(...roles)`: Valida se o usuário autenticado possui o papel requerido, rejeitando a requisição com `ForbiddenError (403)` em caso negativo.
 
@@ -41,11 +41,11 @@ A proteção dos endpoints é realizada por dois middlewares reutilizáveis em [
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`src/middlewares/auth.middleware.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/middlewares/auth.middleware.ts#L1-L62) - Linhas 1-62
+- [`src/middlewares/auth.middleware.ts`](/src/middlewares/auth.middleware.ts#L1-L62) - Linhas 1-62
   - Middlewares `authenticate` e `requireRole`.
-- [`src/modules/auth/auth.service.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/modules/auth/auth.service.ts#L22-L42) - Linhas 22-42
+- [`src/modules/auth/auth.service.ts`](/src/modules/auth/auth.service.ts#L22-L42) - Linhas 22-42
   - Validação com `bcrypt` e geração de token JWT.
-- [`prisma/schema.prisma`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma#L11-L14) - Linhas 11-14 e 25-38
+- [`prisma/schema.prisma`](/prisma/schema.prisma#L11-L14) - Linhas 11-14 e 25-38
   - Enum `UserRole { ADMIN, OPERATOR }` e modelo `User`.
 
 ### Code Evidence
@@ -84,7 +84,7 @@ export function requireRole(...roles: AuthUser['role'][]): RequestHandler {
 
 ## Related Potential ADRs
 - [Framework Web Express.js](../INFRA/framework-web-express.md)
-- [Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](../WEBHOOKS/autenticacao-integridade-hmac-sha256-secret-por-endpoint.md)
+- [Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](../../done/WEBHOOKS/autenticacao-integridade-hmac-sha256-secret-por-endpoint.md)
 
 ## Additional Notes
 Classificado como `must-document` por ser infraestrutura crítica de segurança e autenticação voltada a usuários (Step 0 - Infraestrutura Específica de Domínio).

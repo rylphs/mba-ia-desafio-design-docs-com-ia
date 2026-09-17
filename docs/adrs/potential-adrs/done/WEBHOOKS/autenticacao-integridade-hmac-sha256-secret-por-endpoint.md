@@ -42,11 +42,11 @@ As diretrizes de segurança acordadas incluem:
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`TRANSCRICAO.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md#L117-L145) - Linhas 117-145 e 273-276
+- [`TRANSCRICAO.md`](/TRANSCRICAO.md#L117-L145) - Linhas 117-145 e 273-276
   - Discussão detalhada liderada por Sofia (Engenheira de Segurança) definindo HMAC-SHA256, secret por endpoint, TLS obrigatório, grace period de 24h e agendamento de revisão de segurança.
-- [`docs/adrs/must-include.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/must-include.md#L9) - Linha 9
+- [`docs/adrs/must-include.md`](/docs/adrs/must-include.md#L9) - Linha 9
   - Registro da decisão obrigatória na síntese da reunião.
-- [`src/config/env.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/config/env.ts#L1-L20) - Linhas 1-20
+- [`src/config/env.ts`](/src/config/env.ts#L1-L20) - Linhas 1-20
   - Padrão de gestão de variáveis de ambiente e segurança.
 
 ### Code Evidence
@@ -83,7 +83,7 @@ export function signPayload(payload: string, secret: string): string {
 ## Related Potential ADRs
 - [Garantia de Entrega At-Least-Once com Desduplicação por Event ID](./garantia-entrega-at-least-once-com-desduplicacao-event-id.md)
 - [Padrão Transacional Outbox no MySQL](./padrao-transacional-outbox-no-mysql.md)
-- [Autenticação Stateless com JWT e RBAC](../AUTH/autenticacao-jwt-e-rbac.md)
+- [Autenticação Stateless com JWT e RBAC](../../must-document/AUTH/autenticacao-jwt-e-rbac.md)
 
 ## Additional Notes
 A decisão atende o item 5 do arquivo `docs/adrs/must-include.md` e está classificada obrigatoriamente como `must-document`.

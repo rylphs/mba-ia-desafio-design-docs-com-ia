@@ -39,15 +39,15 @@ Para o cenário inicial, a arquitetura adotará um modelo *single-worker*, onde 
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`src/server.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/server.ts#L1-L28) - Linhas 1-28
+- [`src/server.ts`](/src/server.ts#L1-L28) - Linhas 1-28
   - Estrutura de bootstrap do processo HTTP atual, que servirá de referência de padrão para `src/worker.ts`.
-- [`package.json`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/package.json#L10-L21) - Linhas 10-21
+- [`package.json`](/package.json#L10-L21) - Linhas 10-21
   - Scripts NPM onde o comando `worker` será configurado (`"worker": "tsx watch --env-file=.env src/worker.ts"`).
-- [`src/config/database.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/config/database.ts#L1-L10) - Linhas 1-10
+- [`src/config/database.ts`](/src/config/database.ts#L1-L10) - Linhas 1-10
   - Configuração do `PrismaClient` a ser instanciado de forma isolada por processo.
-- [`TRANSCRICAO.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md#L59-L88) - Linhas 59-88
+- [`TRANSCRICAO.md`](/TRANSCRICAO.md#L59-L88) - Linhas 59-88
   - Diego e Larissa decidindo pelo worker separado em polling de 2 segundos, descartando triggers de banco e aceitando a restrição de single-worker inicial.
-- [`docs/adrs/must-include.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/must-include.md#L6) - Linha 6
+- [`docs/adrs/must-include.md`](/docs/adrs/must-include.md#L6) - Linha 6
   - Requisito mandatório de documentação técnica.
 
 ### Code Evidence
@@ -87,7 +87,7 @@ async function bootstrap(): Promise<void> {
 ## Related Potential ADRs
 - [Padrão Transacional Outbox no MySQL](./padrao-transacional-outbox-no-mysql.md)
 - [Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](./politica-retry-backoff-exponencial-tabela-dlq.md)
-- [Framework Web Express.js](../INFRA/framework-web-express.md)
+- [Framework Web Express.js](../../must-document/INFRA/framework-web-express.md)
 
 ## Additional Notes
 A decisão atende o item 2 do arquivo `docs/adrs/must-include.md` e está classificada obrigatoriamente como `must-document`.

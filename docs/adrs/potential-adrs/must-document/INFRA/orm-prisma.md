@@ -23,7 +23,7 @@ This decision relates to:
 
 Identificou-se a decisão de adotar o **Prisma ORM (v5.22.0)** como a camada unificada de modelagem de dados, migrações declarativas e acesso seguro ao banco de dados MySQL para a aplicação TypeScript.
 
-O Prisma gerencia todo o esquema do banco de dados através do arquivo declarativo [`prisma/schema.prisma`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma), gerando automaticamente clientes tipados em tempo de compilação (`@prisma/client`). Todos os repositórios (`UserRepository`, `CustomerRepository`, `ProductRepository`, `OrderRepository`) recebem instâncias do `PrismaClient` via injeção de dependência.
+O Prisma gerencia todo o esquema do banco de dados através do arquivo declarativo [`prisma/schema.prisma`](/prisma/schema.prisma), gerando automaticamente clientes tipados em tempo de compilação (`@prisma/client`). Todos os repositórios (`UserRepository`, `CustomerRepository`, `ProductRepository`, `OrderRepository`) recebem instâncias do `PrismaClient` via injeção de dependência.
 
 Além do CRUD seguro contra injeção de SQL e geração automática de tipagens TypeScript, o Prisma provê o mecanismo de **Transações Interativas** (`prisma.$transaction(async (tx) => { ... })`), que permite encapsular múltiplas consultas, verificações condicionais de regras de negócio (como checagem de estoque e máquina de estados) e operações de escrita dentro de uma única transação atômica do MySQL.
 
@@ -38,13 +38,13 @@ Além do CRUD seguro contra injeção de SQL e geração automática de tipagens
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`prisma/schema.prisma`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma#L1-L139) - Linhas 1-139
+- [`prisma/schema.prisma`](/prisma/schema.prisma#L1-L139) - Linhas 1-139
   - Declaração de models (`User`, `Customer`, `Product`, `Order`, `OrderItem`, `OrderStatusHistory`, `OrderNumberSequence`).
-- [`package.json`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/package.json#L26-L48) - Linhas 26 e 48
+- [`package.json`](/package.json#L26-L48) - Linhas 26 e 48
   - `@prisma/client: 5.22.0` e `prisma: 5.22.0`.
-- [`src/config/database.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/config/database.ts#L1-L10) - Linhas 1-10
+- [`src/config/database.ts`](/src/config/database.ts#L1-L10) - Linhas 1-10
   - Instanciação centralizada singleton do `PrismaClient`.
-- [`src/modules/orders/order.service.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/modules/orders/order.service.ts#L24-L179) - Linhas 24-179
+- [`src/modules/orders/order.service.ts`](/src/modules/orders/order.service.ts#L24-L179) - Linhas 24-179
   - Uso de `Prisma.TransactionClient` e `prisma.$transaction`.
 
 ### Code Evidence
@@ -78,7 +78,7 @@ export class OrderService {
 
 ## Related Potential ADRs
 - [Banco de Dados Relacional MySQL 8.0](./banco-de-dados-relacional-mysql.md)
-- [Padrão Transacional Outbox no MySQL](../WEBHOOKS/padrao-transacional-outbox-no-mysql.md)
+- [Padrão Transacional Outbox no MySQL](../../done/WEBHOOKS/padrao-transacional-outbox-no-mysql.md)
 
 ## Additional Notes
 Classificado automaticamente como `must-document` pela Categoria 3 (ORM/Data Access Layer - Step 0 da skill).

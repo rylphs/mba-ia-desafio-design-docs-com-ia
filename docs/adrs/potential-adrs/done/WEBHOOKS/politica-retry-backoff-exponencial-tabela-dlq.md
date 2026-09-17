@@ -44,11 +44,11 @@ Essa janela cobre um total aproximado de 15 horas desde a primeira falha até a 
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`TRANSCRICAO.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md#L90-L116) - Linhas 90-116 e 204-214
+- [`TRANSCRICAO.md`](/TRANSCRICAO.md#L90-L116) - Linhas 90-116 e 204-214
   - Diego, Bruno e Larissa discutindo e descartando 3 tentativas por ser pouco e aprovando 5 tentativas (1m, 5m, 30m, 2h, 12h) com tabela DLQ dedicada e endpoint admin de replay.
-- [`docs/adrs/must-include.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/must-include.md#L8) - Linha 8
+- [`docs/adrs/must-include.md`](/docs/adrs/must-include.md#L8) - Linha 8
   - Requisito mandatório de documentação técnica.
-- [`src/middlewares/auth.middleware.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/middlewares/auth.middleware.ts#L49-L62) - Linhas 49-62
+- [`src/middlewares/auth.middleware.ts`](/src/middlewares/auth.middleware.ts#L49-L62) - Linhas 49-62
   - Middleware `requireRole('ADMIN')` que protegerá o endpoint `POST /admin/webhooks/dead-letter/:id/replay`.
 
 ### Code Evidence

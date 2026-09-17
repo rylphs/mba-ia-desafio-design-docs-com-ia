@@ -43,17 +43,17 @@ A decisão proíbe a introdução de novos paradigmas concorrentes ou biblioteca
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`src/shared/errors/app-error.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/shared/errors/app-error.ts#L1-L17) - Linhas 1-17
+- [`src/shared/errors/app-error.ts`](/src/shared/errors/app-error.ts#L1-L17) - Linhas 1-17
   - Definição da classe base `AppError`.
-- [`src/middlewares/error.middleware.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/middlewares/error.middleware.ts#L14-L65) - Linhas 14-65
+- [`src/middlewares/error.middleware.ts`](/src/middlewares/error.middleware.ts#L14-L65) - Linhas 14-65
   - Middleware centralizado que intercepta `AppError`, `ZodError` e erros conhecidos do Prisma.
-- [`src/shared/logger/index.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/shared/logger/index.ts)
+- [`src/shared/logger/index.ts`](/src/shared/logger/index.ts)
   - Logger estruturado baseado em Pino.
-- [`src/middlewares/auth.middleware.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/middlewares/auth.middleware.ts#L49-L62) - Linhas 49-62
+- [`src/middlewares/auth.middleware.ts`](/src/middlewares/auth.middleware.ts#L49-L62) - Linhas 49-62
   - Middleware `requireRole` para autorização de perfis.
-- [`TRANSCRICAO.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md#L160-L181) - Linhas 160-181
+- [`TRANSCRICAO.md`](/TRANSCRICAO.md#L160-L181) - Linhas 160-181
   - Bruno, Diego e Larissa acordando o reuso máximo de `AppError`, prefixo `WEBHOOK_`, middleware de erro e logger Pino.
-- [`docs/adrs/must-include.md`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/must-include.md#L10) - Linha 10
+- [`docs/adrs/must-include.md`](/docs/adrs/must-include.md#L10) - Linha 10
   - Requisito mandatório de documentação técnica.
 
 ### Code Evidence
@@ -93,8 +93,8 @@ export class AppError extends Error {
 
 ## Related Potential ADRs
 - [Padrão Transacional Outbox no MySQL](./padrao-transacional-outbox-no-mysql.md)
-- [Arquitetura de API REST com Tratamento Centralizado de Erros](../INFRA/arquitetura-api-rest.md)
-- [Autenticação Stateless com JWT e RBAC](../AUTH/autenticacao-jwt-e-rbac.md)
+- [Arquitetura de API REST com Tratamento Centralizado de Erros](../../must-document/INFRA/arquitetura-api-rest.md)
+- [Autenticação Stateless com JWT e RBAC](../../must-document/AUTH/autenticacao-jwt-e-rbac.md)
 
 ## Additional Notes
 A decisão atende o item 6 do arquivo `docs/adrs/must-include.md` e está classificada obrigatoriamente como `must-document`.

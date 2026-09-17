@@ -39,11 +39,11 @@ O suporte a transações ACID com isolamento rigoroso no MySQL é peça central 
 ## Evidence Found in Codebase
 
 ### Key Files
-- [`docker-compose.yml`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docker-compose.yml#L1-L29) - Linhas 1-29
+- [`docker-compose.yml`](/docker-compose.yml#L1-L29) - Linhas 1-29
   - Declaração do serviço `mysql:8.0`, portas, volumes e flags de inicialização (`utf8mb4`).
-- [`prisma/schema.prisma`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/prisma/schema.prisma#L5-L9) - Linhas 5-9
+- [`prisma/schema.prisma`](/prisma/schema.prisma#L5-L9) - Linhas 5-9
   - Configuração do datasource com `provider = "mysql"`.
-- [`src/config/database.ts`](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/src/config/database.ts#L1-L10) - Linhas 1-10
+- [`src/config/database.ts`](/src/config/database.ts#L1-L10) - Linhas 1-10
   - Inicialização do client de banco de dados.
 
 ### Code Evidence
@@ -82,7 +82,7 @@ services:
 
 ## Related Potential ADRs
 - [ORM Prisma para Acesso a Dados e Modelagem de Esquema](./orm-prisma.md)
-- [Padrão Transacional Outbox no MySQL](../WEBHOOKS/padrao-transacional-outbox-no-mysql.md)
+- [Padrão Transacional Outbox no MySQL](../../done/WEBHOOKS/padrao-transacional-outbox-no-mysql.md)
 
 ## Additional Notes
 Classificado automaticamente como `must-document` pela Categoria 1 (Serviços de Infraestrutura - Step 0 da skill).

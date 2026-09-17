@@ -104,7 +104,7 @@ sequenceDiagram
 - **Quebra de Confiabilidade Transacional:** Se o servidor do cliente estiver temporariamente fora do ar ou com lentidão severa, a transação local de pedido falhará ou causará reversão indevida (*rollback*) de uma operação comercial legítima.
 - **Vulnerabilidade a Efeito Cascata:** Servidores remotos degradados consomem as threads do pool da API Node.js, levando ao esgotamento rápido de recursos e indisponibilidade para todos os outros usuários da plataforma.
 - **Inexistência de Resiliência:** Não provê mecanismo viável para retentativas espaçadas com tolerância a indisponibilidades prolongadas.
-- **Rejeitada categoricamente pela engenharia**, conforme fundamentado nas diretrizes de [ADR-001: Padrão Transacional Outbox no MySQL](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md).
+- **Rejeitada categoricamente pela engenharia**, conforme fundamentado nas diretrizes de [ADR-001: Padrão Transacional Outbox no MySQL](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md).
 
 ---
 
@@ -148,7 +148,7 @@ flowchart LR
 - **O Problema da Escrita Dupla (*Dual-Write Problem*):** É computacionalmente inviável garantir consistência transacional atômica entre o commit no banco de dados MySQL e a publicação no broker sem implementar um padrão outbox adicional. Uma falha de rede pós-commit acarreta perda definitiva do evento; uma publicação anterior ao commit pode disparar eventos falsos se o banco sofrer *rollback*.
 - **Custo Operacional Excessivo:** Demanda o provisionamento, monitoramento, parametrização de alta disponibilidade e gestão de novos clusters de infraestrutura para uma equipe de engenharia reduzida.
 - **Incompatibilidade com o Prazo Contratual:** O esforço de homologação e implantação de uma infraestrutura desse porte extrapola a estimativa viável de três *sprints*, inviabilizando a entrega contratada para fim de novembro.
-- **Descarte por Sobre-engenharia (*Overengineering*)**, contrariando o princípio de parcimônia consolidado em [ADR-001](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) e [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md).
+- **Descarte por Sobre-engenharia (*Overengineering*)**, contrariando o princípio de parcimônia consolidado em [ADR-001](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) e [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md).
 
 ---
 
@@ -227,12 +227,12 @@ A abordagem de disparo síncrono (Approach 1) foi sumariamente rejeitada por vio
 Ao adotar a **Approach 3**, a engenharia assume deliberadamente a responsabilidade de gerenciar o ciclo de vida da tabela outbox e aceita uma latência intrínseca de até 2 segundos vinculada ao intervalo de *polling*, reconhecendo que essa latência situa-se com ampla folga dentro do limiar de 10 segundos contratado. 
 
 Essa decisão está integralmente embasada e formalizada no conjunto de registros de decisão arquitetural do projeto:
-- [ADR-001: Padrão Transacional Outbox no MySQL](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Fundamenta a consistência atômica e eliminação de escrita dupla na persistência relacional.
-- [ADR-002: Worker Desacoplado via Polling](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Estabelece a segregação de processo (`src/worker.ts`), intervalo de 2 segundos e modelo de ordenação por pedido.
-- [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Define o contrato de retransmissão e a desduplicação na ponta receptora via cabeçalho `X-Event-Id`.
-- [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Fixa a progressão de 5 tentativas (~15h), a tabela de mensagens mortas e o endpoint administrativo de *replay*.
-- [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Normatiza a segurança da camada de aplicação com assinatura criptográfica, segredos individuais, tolerância de 24h para rotação e *timeout* de 10s.
-- [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Consolida a padronização modular (`src/modules/webhooks`), tipagem de erros (`WEBHOOK_*`), esquemas declarativos Zod e registros Pino.
+- [ADR-001: Padrão Transacional Outbox no MySQL](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Fundamenta a consistência atômica e eliminação de escrita dupla na persistência relacional.
+- [ADR-002: Worker Desacoplado via Polling](/docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Estabelece a segregação de processo (`src/worker.ts`), intervalo de 2 segundos e modelo de ordenação por pedido.
+- [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](/docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Define o contrato de retransmissão e a desduplicação na ponta receptora via cabeçalho `X-Event-Id`.
+- [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](/docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Fixa a progressão de 5 tentativas (~15h), a tabela de mensagens mortas e o endpoint administrativo de *replay*.
+- [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](/docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Normatiza a segurança da camada de aplicação com assinatura criptográfica, segredos individuais, tolerância de 24h para rotação e *timeout* de 10s.
+- [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Consolida a padronização modular (`src/modules/webhooks`), tipagem de erros (`WEBHOOK_*`), esquemas declarativos Zod e registros Pino.
 
 ---
 
@@ -259,15 +259,15 @@ Essa decisão está integralmente embasada e formalizada no conjunto de registro
 ## References
 
 - **Registros de Decisões de Arquitetura (ADRs do Projeto):**
-  - [ADR-001: Padrão Transacional Outbox no MySQL](./docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Decisão sobre persistência atômica na transação do banco relacional existente.
-  - [ADR-002: Worker Desacoplado via Polling](.docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Decisão sobre execução de worker independente em processo dedicado e intervalo de polling de 2 segundos.
-  - [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](./docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Decisão sobre semântica de entrega e desduplicação via cabeçalho `X-Event-Id`.
-  - [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](./docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Decisão sobre política de 5 tentativas (~15h), segregação de falhas permanentes em tabela DLQ e rota de replay com role ADMIN.
-  - [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](./docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Decisão sobre assinatura criptográfica por endpoint, rotação de 24h, limite de 64KB e obrigatoriedade de HTTPS.
-  - [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](.docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Decisão sobre reaproveitamento de componentes transversais, padrão modular (`src/modules/webhooks`) e prefixo `WEBHOOK_`.
+  - [ADR-001: Padrão Transacional Outbox no MySQL](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Decisão sobre persistência atômica na transação do banco relacional existente.
+  - [ADR-002: Worker Desacoplado via Polling](/docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Decisão sobre execução de worker independente em processo dedicado e intervalo de polling de 2 segundos.
+  - [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](/docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Decisão sobre semântica de entrega e desduplicação via cabeçalho `X-Event-Id`.
+  - [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](/docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Decisão sobre política de 5 tentativas (~15h), segregação de falhas permanentes em tabela DLQ e rota de replay com role ADMIN.
+  - [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](/docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Decisão sobre assinatura criptográfica por endpoint, rotação de 24h, limite de 64KB e obrigatoriedade de HTTPS.
+  - [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Decisão sobre reaproveitamento de componentes transversais, padrão modular (`src/modules/webhooks`) e prefixo `WEBHOOK_`.
 
 - **Transcrição e Insumos da Reunião Técnica:**
-  - [TRANSCRICAO.md](./TRANSCRICAO.md) — Transcrição integral da reunião de alinhamento técnico entre Larissa, Marcos, Bruno, Diego e Sofia realizada em quinta-feira às 09:00.
+  - [TRANSCRICAO.md](/TRANSCRICAO.md) — Transcrição integral da reunião de alinhamento técnico entre Larissa, Marcos, Bruno, Diego e Sofia realizada em quinta-feira às 09:00.
 
 - **Componentes e Padrões da Codebase Referenciados:**
   - `src/server.ts` — Ponto de entrada da API HTTP principal.
