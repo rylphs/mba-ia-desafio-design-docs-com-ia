@@ -97,22 +97,29 @@ Use também como referência técnica a pesquisa salva no documento @docs/DEEP_R
 Durante a interação com os modelos de IA, foram necessárias intervenções deliberadas para corrigir desvios conceituais, padronizar formatos e garantir fidelidade absoluta aos fatos:
 
 ### 1. Identificação dos Temas Técnicos (2 Iterações)
-- **Problema:** Na primeira iteração, a saída gerada foi excessivamente prolixa, misturando comentários operacionais de reuniões com requisitos técnicos centrais.
-- **Ajuste:** Refinamento da instrução com restrição para geração de lista em *bullets* com sentenças concisas de linha única, gerando o arquivo estruturado `docs/adrs/must-include.md`.
+- **Iteração 1:** Na primeira iteração, a saída gerada foi excessivamente prolixa, misturando comentários operacionais de reuniões com requisitos técnicos centrais.
+  - **Ajuste:** Refinamento da instrução com restrição para geração de lista em *bullets* com sentenças concisas de linha única, gerando o arquivo estruturado `docs/adrs/must-include.md`.
 
-### 2. Geração das ADRs (4 Iterações)
-- **Problema 1:** A skill `adr-analyzer` falhava ao carregar no `antigravity-cli` por problemas de escape de aspas na descrição do cabeçalho YAML. Corrigido com adição de aspas duplas e caracteres de escape (`\`).
-- **Problema 2:** Na segunda execução, a skill desconsiderava os itens pontuados fora do `must-include.md`. Foi ajustado o prompt para instruir o modelo a classificar os itens do arquivo obrigatoriamente como `must-document`, aplicando o algoritmo padrão da skill para os demais.
-- **Problema 3 e 4:** Geração das minutas de ADRs e preenchimento sistemático dos blocos `[NEEDS INPUT]` correlacionando falas específicas da transcrição.
+### 2. Geração das ADRs (3 Iterações)
+- **Iteração 1:** A skill `adr-analyzer` falhava ao carregar no `antigravity-cli` por problemas de escape de aspas na descrição do cabeçalho YAML. 
+  - **Ajuste**: Corrigido com adição de aspas duplas e caracteres de escape (`\`).
+- **Iteração 2:** Na segunda execução, a skill desconsiderava os itens pontuados fora do `must-include.md`. 
+  - **Ajuste**: Foi ajustado o prompt para instruir o modelo a classificar os itens do arquivo obrigatoriamente como `must-document`, aplicando o algoritmo padrão da skill para os demais.
+- **Iteração 3:** Geração das minutas de ADRs e preenchimento sistemático dos blocos `[NEEDS INPUT]` correlacionando falas específicas da transcrição.
 
-### 3. Geração da RFC (4 Iterações)
-- **Problema 1:** Criação da skill customizada `rfc-generator`.
-- **Problema 2:** A RFC inicial gerava diagramas de fluxo em texto ASCII puro, dificultando a interpretação arquitetural.
-- **Problema 3:** Conversão para blocos de código Mermaid apresentou pequenas inconsistências sintáticas em nós com parênteses.
-- **Ajuste Final:** Correção dos identificadores Mermaid com aspas e links bidirecionais para as ADRs `ADR-001` a `ADR-006`.
+### 3. Geração da RFC (5 Iterações)
+- **Iteração 1:** Criação da skill customizada `rfc-generator`.
+- **Iteração 2:** A RFC inicial gerava diagramas de fluxo em texto ASCII puro, dificultando a interpretação arquitetural.
+  - **Ajuste**: Prompt para conversão dos diagramas para Mermaid
+- **Iteração 3:** Conversão para blocos de código Mermaid apresentou pequenas inconsistências sintáticas em nós com parênteses.
+  - **Ajuste**: Prompt para correção dos erros nos diagramas
+- **Iteração 4**: Presença de links absolutos e links quebrados.
+  - **Ajuste**: Prompt para correção dos links
+- **Problema 5:** Formato do RFC não estava compatível com o solicitado no anúncio do desario
+  - **Ajuste:** Execução de prompt para solicitar adequação do formato.
 
-### 4. Deep Research e Validação Arquitetural (2 Iterações)
-- **Problema:** A skill `deep-research` foi desenhada para conduzir uma entrevista interativa de até 6 perguntas com o usuário.
+### 4. Deep Research (1 Iterações)
+- **Iteração 1:** A skill `deep-research` foi desenhada para conduzir uma entrevista interativa de até 6 perguntas com o usuário. 
 - **Ajuste:** O prompt de invocação instruiu a IA a utilizar os documentos existentes (`TRANSCRICAO.md`, ADRs e RFC) como fonte direta para responder a todas os questionamentos.
 
 ### 5. Geração do PRD (2 Iterações)
@@ -149,11 +156,11 @@ Todos os artefatos foram dispostos na pasta `docs/` e na raiz do repositório, p
 ```
 
 ### Ordem Sugerida de Leitura:
-1. **[README.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/README.md):** Visão geral da jornada de engenharia com IA, decisões de processo e ferramentas.
-2. **[TRANSCRICAO.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/TRANSCRICAO.md):** Contexto bruto da discussão da equipe para ancoragem de fatos.
-3. **[docs/PRD.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/PRD.md):** Alinhamento sobre o problema comercial, metas quantitativas e escopo delimitado.
-4. **[docs/adrs/README.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/adrs/README.md) & ADRs 001 a 006:** Compreensão das decisões arquiteturais isoladas e seus trade-offs.
-5. **[docs/RFC.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/RFC.md):** Proposta técnica integrada submetida à revisão e alternativas descartadas.
-6. **[docs/DEEP_RESEARCH.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/DEEP_RESEARCH.md):** Fundamentação analítica profunda de resiliência, criptografia e concorrência.
-7. **[docs/FDD.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/FDD.md):** Especificação acionável de implementação, fluxos, contratos REST e integração de código.
-8. **[docs/TRACKER.md](file:///home/raphael/workspace/pos-ia/desafios/mba-ia-desafio-design-docs-com-ia/docs/TRACKER.md):** Auditoria e verificação de rastreabilidade de cada elemento às suas fontes originais.
+1. **[README.md](README.md):** Visão geral da jornada de engenharia com IA, decisões de processo e ferramentas.
+2. **[TRANSCRICAO.md](TRANSCRICAO.md):** Contexto bruto da discussão da equipe para ancoragem de fatos.
+3. **[docs/PRD.md](docs/PRD.md):** Alinhamento sobre o problema comercial, metas quantitativas e escopo delimitado.
+4. **[docs/adrs/README.md](docs/adrs/README.md) & ADRs 001 a 006:** Compreensão das decisões arquiteturais isoladas e seus trade-offs.
+5. **[docs/RFC.md](docs/RFC.md):** Proposta técnica integrada submetida à revisão e alternativas descartadas.
+6. **[docs/DEEP_RESEARCH.md](docs/DEEP_RESEARCH.md):** Fundamentação analítica profunda de resiliência, criptografia e concorrência.
+7. **[docs/FDD.md](docs/FDD.md):** Especificação acionável de implementação, fluxos, contratos REST e integração de código.
+8. **[docs/TRACKER.md](docs/TRACKER.md):** Auditoria e verificação de rastreabilidade de cada elemento às suas fontes originais.

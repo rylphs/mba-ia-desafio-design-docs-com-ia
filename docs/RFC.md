@@ -76,10 +76,10 @@ flowchart TD
         RemoteEndpoint -->|HTTP 2xx Sucesso| MarkDelivered["Marca evento como DELIVERED<br/>Expurgo agendado após 30 dias"]
         MarkDelivered --> OutboxTbl
         
-        RemoteEndpoint -->|Falha HTTP ou Timeout 10s| RetryEvaluation{"Tentativas < 5?<br/>(1m, 5m, 30m, 2h, 12h)"}
+        RemoteEndpoint -->|"Falha HTTP ou Timeout 10s"| RetryEvaluation{"Tentativas < 5?<br/>(1m, 5m, 30m, 2h, 12h)"}
         RetryEvaluation -->|Sim| ScheduleNextRetry["Incrementa retry_count<br/>Define next_retry_at"]
         ScheduleNextRetry --> OutboxTbl
-        RetryEvaluation -->|Não - Esgotado (~15h)| MoveToDLQ[("webhook_dead_letter<br/>Tabela DLQ Segregada")]
+        RetryEvaluation -->|"Não - Esgotado (~15h)"| MoveToDLQ[("webhook_dead_letter<br/>Tabela DLQ Segregada")]
     end
 
     subgraph AdminFlow["3. Governança e Reprocessamento"]
@@ -155,10 +155,10 @@ flowchart LR
         DB[("MySQL Database")]
         Broker[("Broker Externo Dedicado<br/>Redis Streams / Kafka")]
     end
-    API -->|1. Commit SQL| DB
-    API -.->|2. Publicação Assíncrona (Dual-Write)| Broker
-    Broker -->|3. Consumo Reativo| Worker["Consumer Pool"]
-    Worker -->|4. HTTP POST| RemoteEndpoint["Endpoint do Cliente"]
+    API -->|"1. Commit SQL"| DB
+    API -.->|"2. Publicação Assíncrona (Dual-Write)"| Broker
+    Broker -->|"3. Consumo Reativo"| Worker["Consumer Pool"]
+    Worker -->|"4. HTTP POST"| RemoteEndpoint["Endpoint do Cliente"]
 ```
 
 **Prós:**
@@ -248,17 +248,3 @@ A proposta arquitetural consolidada nesta RFC fundamenta-se nas seguintes decis�
 - [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](/docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Especifica a progressão matemática de 5 tentativas de retentativa (~15h), o transbordo para a tabela de mensagens mortas e a rota de *replay* administrativo restrita a `ADMIN`.
 - [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](/docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Padroniza a segurança criptográfica via cabeçalho `X-Signature-SHA256`, chaves exclusivas por webhook, suporte a rotação com carência de 24 horas e timeout de 10 segundos.
 - [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Garante a aderência às convenções arquiteturais existentes do sistema: padrão modular sob `src/modules/webhooks`, tipagem de erros `AppError` com prefixo `WEBHOOK_*`, esquemas declarativos Zod e registros estruturados Pino.
-
----
-
-## Referências Complementares
-
-- **Transcrição da Reunião Técnica:**
-  - [TRANSCRICAO.md](/TRANSCRICAO.md) — Registro integral dos alinhamentos entre Larissa, Marcos, Bruno, Diego e Sofia.
-- **Componentes Centrais da Base de Código:**
-  - `src/server.ts` — Ponto de inicialização do servidor HTTP Express.
-  - `src/config/database.ts` — Inicialização do pool de conexões e cliente do Prisma ORM.
-  - `src/middlewares/auth.middleware.ts` — Middlewares de autenticação JWT e validação de papéis (`authenticate`, `requireRole`).
-  - `src/middlewares/error.middleware.ts` — Interceptador global de exceções para tratamento padronizado de erros.
-  - `src/shared/errors/app-error.ts` — Classe base para lançamento de erros operacionais tipados da aplicação.
-  - `src/shared/logger/index.ts` — Utilitário de logging estruturado assíncrono baseado no Pino.
