@@ -1,175 +1,65 @@
 # RFC: Sistema de Webhooks para Notificação de Pedidos
 
-| Field | Value |
-|-------|-------|
-| **Author(s)** | Larissa (Tech Lead), Bruno (Engenheiro Pleno - Time de Pedidos), Diego (Engenheiro Sênior - Time de Plataforma) |
-| **Approver(s)** | Larissa (Tech Lead), Marcos (Product Manager), Sofia (Engenheira de Segurança), Diego (Engenheiro Sênior - Time de Plataforma) |
-| **Status** | Aceito |
-| **Created** | 2026-09-13 |
-| **Last Updated** | 2026-09-15 |
-| **Team** | Time de Pedidos & Time de Plataforma |
+| Campo | Detalhe |
+|---|---|
+| **Autor(es)** | Larissa (Tech Lead) — com colaboração de Bruno (Eng. Pedidos) e Diego (Eng. Plataforma) |
+| **Status** | Em Revisão (Submetido para Revisão Técnica da Equipe) |
+| **Data de Criação** | 2026-09-13 |
+| **Última Atualização** | 2026-09-17 |
+| **Revisores** | Larissa (Tech Lead), Marcos (Product Manager), Bruno (Engenheiro - Pedidos), Diego (Engenheiro - Plataforma), Sofia (Engenheira - Segurança) |
+| **Time** | Time de Pedidos & Time de Plataforma |
 
 ---
 
-## Abstract
+## Resumo Executivo (TL;DR)
 
-Esta RFC propõe a concepção e implementação de um sistema de notificações assíncronas de saída (*outbound webhooks*) para informar parceiros comerciais e clientes B2B em tempo real sobre mudanças no ciclo de vida de seus pedidos. A solução resolve problemas críticos de saturação de conexões e lentidão na API principal de pedidos provocados por varreduras contínuas (*polling*) de grandes clientes como Atlas Comercial, MaxDistribuição e Nova Cargo, mitigando o risco iminente de evasão contratual (*churn*) para concorrentes. 
+Esta RFC propõe a implementação de uma esteira assíncrona de notificações de saída (*outbound webhooks*) para informar parceiros comerciais e clientes B2B em tempo real sobre mudanças no ciclo de vida de seus pedidos. A solução resolve a saturação crítica de conexões e lentidão na API principal (`GET /orders`) provocada por varreduras contínuas (*polling*) de clientes prioritários (Atlas Comercial, MaxDistribuição e Nova Cargo), eliminando o risco imediato de perda de contratos (*churn*). 
 
-O principal *insight* técnico e *trade-off* arquitetural consiste na adoção do padrão Transacional Outbox integrado atomicamente à transação SQL de atualização de pedidos no banco de dados relacional (MySQL), combinado com um worker independente em processo dedicado executando consultas periódicas (*polling*) a cada 2 segundos. Essa abordagem viabiliza consistência atômica e entrega com latência ponta a ponta inferior a 10 segundos sem a necessidade de provisionar e operar novos componentes distribuídos de mensageria (como Apache Kafka ou Redis Cluster), preservando a capacidade operacional de uma equipe enxuta e assegurando o cumprimento do cronograma de três ciclos de desenvolvimento (*sprints*).
-
----
-
-## Motivation
-
-Atualmente, clientes corporativos B2B integram-se à plataforma consultando periodicamente o endpoint `GET /orders` para verificar se houve alteração de status em seus pedidos em trânsito. Esse modelo de *polling* constante demonstrou-se altamente ineficiente, caro e danoso para ambas as partes:
-
-1. **Degradação de Performance e Custo:** Varreduras contínuas geram consumo desnecessário de conexões com o banco de dados e sobrecarga de CPU na API pública de pedidos, tornando a integração lenta e onerosa para os clientes externos e para a infraestrutura interna.
-2. **Pressão Comercial e Risco de Perda de Clientes (*Churn*):** Três clientes prioritários de alta representatividade de faturamento — Atlas Comercial, MaxDistribuição e Nova Cargo — formalizaram uma demanda mandatória para o recebimento de notificações ativas em tempo real. A Atlas Comercial advertiu formalmente que considerará migrar sua operação para uma solução concorrente caso o recurso não seja entregue até o encerramento do trimestre atual (final de novembro de 2026).
-3. **Restrições de SLA de Negócio:** A expectativa acordada com os clientes para uma notificação em "tempo real" aceitável é uma latência ponta a ponta estritamente inferior a 10 segundos entre a transição de estado interna e o recebimento pelo consumidor.
-4. **Inviabilidade do Acoplamento Síncrono:** O método de transição de estado (`changeStatus`) no serviço central de pedidos (`OrderService`) já executa uma transação SQL pesada que atualiza o registro do pedido (`orders`), grava o histórico de movimentação (`order_status_history`) e debita itens do inventário (`stock_quantity`). Inserir requisições HTTP externas síncronas no meio dessa transação bloquearia conexões e travas de banco com o tempo de resposta de terceiros, enquanto qualquer falha remota colocaria a equipe diante de um falso dilema: reverter uma atualização legítima de pedido ou perder permanentemente a notificação.
-
-Portanto, é mandatório estabelecer uma esteira desacoplada, atômica, altamente resiliente e segura para emissão de webhooks.
+O núcleo arquitetural baseia-se na adoção do padrão **Transacional Outbox** integrado atomicamente à transação SQL de alteração de pedidos no banco de dados relacional (MySQL), combinado a um processo consumidor independente (*worker*) executando consultas periódicas (*polling*) a cada 2 segundos. A proposta garante consistência ACID sem escrita dupla, latência ponta a ponta inferior a 10 segundos, entrega *at-least-once*, resiliência via retentativas com *Dead Letter Queue* (DLQ) e autenticação criptográfica HMAC-SHA256, sem introduzir componentes complexos de mensageria externa (como Kafka ou Redis) e cumprindo com segurança o prazo estrito de três *sprints* (fim de novembro de 2026).
 
 ---
 
-## Goals and Non-Goals
+## Contexto e Problema
 
-**Goals:**
-- **Latência de Entrega em Tempo Real:** Garantir latência ponta a ponta inferior a 10 segundos para 99% dos eventos de alteração de status de pedidos (`from_status` -> `to_status`), satisfazendo o SLA acordado com os clientes B2B.
-- **Consistência Transacional Atômica (Zero Escrita Dupla):** Garantir que nenhuma alteração de status commitada deixe de gerar seu respectivo evento de notificação e que nenhum evento órfão seja emitido se a transação do pedido sofrer *rollback*.
-- **Garantia de Entrega *At-Least-Once* com Idempotência:** Assegurar que nenhum evento seja descartado diante de falhas de rede transitórias, fornecendo o cabeçalho padronizado `X-Event-Id` (UUID) para desduplicação idempotente no receptor.
-- **Resiliência e Recuperação com Backoff Exponencial e DLQ:** Implementar uma política automática de 5 tentativas de retentativa espaçadas progressivamente (1m, 5m, 30m, 2h, 12h — janela total de aproximadamente 15 horas), segregando falhas exauridas em uma tabela dedicada de *Dead Letter Queue* (`webhook_dead_letter`) com capacidade de reprocessamento manual via rota administrativa restrita.
-- **Autenticidade e Integridade Criptográfica:** Proteger cada requisição via assinatura HMAC-SHA256 calculada sobre o *payload* bruto, com chave secreta individual por endpoint (`secret`), suporte a rotação programada com convivência/carência de 24 horas e obrigatoriedade estrita de transporte seguro (HTTPS).
-- **Interface Completa de Gerenciamento e Auditoria:** Disponibilizar endpoints REST para cadastro, edição, exclusão e consulta de webhooks e histórico de despachos (`GET /webhooks/:id/deliveries`), além de rota administrativa de *replay* restrita ao perfil `ADMIN`.
+### Cenário Atual e Dores de Negócio
+Atualmente, os clientes B2B da plataforma consultam periodicamente o endpoint `GET /orders` para identificar se seus pedidos mudaram de estado (ex: de `PENDING` para `PAID` ou `SHIPPED`). Esse modelo de *polling* constante gerou impactos operacionais graves:
+1. **Sobrecarga de Infraestrutura:** Consumo excessivo de conexões com o MySQL e degradação de CPU na API de pedidos, encarecendo a infraestrutura e elevando a latência média para todos os usuários.
+2. **Pressão Comercial e Risco de Churn:** Três dos maiores clientes corporativos da empresa — Atlas Comercial, MaxDistribuição e Nova Cargo — exigiram formalmente notificações push em tempo real. A Atlas Comercial comunicou formalmente a intenção de rescindir o contrato caso o recurso não entre em produção até o fim de novembro de 2026.
+3. **Inviabilidade do Acoplamento Síncrono:** A transição de status no serviço de pedidos (`OrderService.changeStatus`) executa uma transação SQL atômica que atualiza o pedido (`orders`), registra o histórico de auditoria (`order_status_history`) e debita o estoque (`stock_quantity`). Efetuar chamadas HTTP síncronas para servidores externos durante essa transação bloquearia conexões e travas de banco com o tempo de rede de terceiros. Além disso, qualquer falha ou timeout do cliente geraria um falso dilema: reverter uma atualização legítima de pedido ou perder permanentemente a notificação.
 
-**Non-Goals:**
-- **Webhooks de Entrada (*Inbound Webhooks*):** O projeto cobre estritamente o envio de notificações para sistemas externos (*outbound*). Recepção ou processamento de webhooks enviados por terceiros está deliberadamente fora de escopo.
-- **Interface Gráfica de Usuário (Painel / Dashboard Visual):** Todo o controle e visualização nesta fase serão realizados exclusivamente via contratos de API RESTful. O desenvolvimento de interfaces visuais será conduzido posteriormente pelo time de frontend em iniciativa apartada.
-- **Notificações Ativas de Falha por Canais Alternativos (E-mail / SMS):** Não haverá envio de alertas por e-mail quando um endpoint de cliente apresentar falhas sucessivas nesta primeira versão.
-- **Garantia de Ordenação Global Irrestrita:** Não é meta assegurar ordenação sequencial entre eventos de pedidos de clientes diferentes. A ordenação é garantida estritamente por pedido (`order_id`) enquanto vigorar a execução de uma instância consumidora única.
-- **Controle de Vazão de Saída (*Outbound Rate Limiting*):** Não será aplicada limitação artificial de requisições por cliente no lançamento inicial; o tráfego será monitorado em produção para definição oportuna de regras.
-- **Introdução de Plataformas Externas de Mensageria:** Não faz parte do escopo provisionar ou gerenciar plataformas como Apache Kafka, RabbitMQ ou clusters Redis, mantendo a infraestrutura restrita ao banco MySQL existente.
+### Objetivos (Goals)
+- **Latência em Tempo Real:** Assegurar latência ponta a ponta inferior a 10 segundos para 99% dos eventos de alteração de status de pedidos, atendendo ao SLA contratual.
+- **Consistência Atômica (Zero Escrita Dupla):** Garantir que nenhuma alteração de status confirmada deixe de gerar seu respectivo evento de notificação e que nenhum evento órfão seja emitido se a transação sofrer *rollback*.
+- **Entrega At-Least-Once com Idempotência:** Garantir a persistência e entrega de todos os eventos diante de falhas de rede transitórias, provendo o cabeçalho `X-Event-Id` (UUID v4) para desduplicação idempotente na ponta receptora.
+- **Resiliência Automatizada com DLQ:** Implementar política de 5 retentativas com backoff exponencial progressivo (1m, 5m, 30m, 2h, 12h — janela total de ~15h), segregando falhas exauridas em tabela dedicada de *Dead Letter Queue* (`webhook_dead_letter`) com rota de reprocessamento manual administrativo restrita a `ADMIN`.
+- **Autenticidade e Integridade Criptográfica:** Assinar o payload de cada disparo via HMAC-SHA256 utilizando segredo exclusivo por endpoint, com janela de carência de 24 horas para suporte a rotação segura e obrigatoriedade de transporte sob HTTPS.
 
----
-
-## Approaches
-
-Apresentamos as três abordagens arquiteturais avaliadas durante a reunião técnica, com a ponderação imparcial de seus prós, contras e viabilidade frente às restrições do negócio.
-
-### Approach 1: Disparo Síncrono no Fluxo de Atualização do Pedido
-
-**Description:**
-
-Nesta abordagem, a chamada HTTP de notificação é realizada de maneira síncrona diretamente dentro do método `changeStatus` do `OrderService`, no mesmo momento em que os registros do pedido são atualizados. A requisição é disparada logo antes da finalização do comando ou dentro do bloco de execução do serviço.
-
-**Architecture:**
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Client as Cliente / Usuário
-    participant API as API de Pedidos (OrderService)
-    participant DB as MySQL (orders, stock, history)
-    participant Customer as Endpoint Webhook do Cliente
-
-    Client->>API: PATCH /orders/:id/status
-    activate API
-    API->>DB: Inicia Transação SQL
-    API->>DB: UPDATE orders SET status = ...
-    API->>DB: INSERT order_status_history
-    API->>DB: UPDATE stock_quantity
-    Note over API,Customer: Transação SQL aberta retendo conexões e locks
-    API->>Customer: POST webhook payload (Chamada HTTP síncrona)
-    activate Customer
-    alt Cliente responde OK (200) dentro do prazo
-        Customer-->>API: 200 OK
-        API->>DB: COMMIT da transação
-        API-->>Client: 200 OK (Pedido atualizado)
-    else Cliente lento ou indisponível
-        Customer--xAPI: Timeout de rede (10s+) ou falha 5xx
-        deactivate Customer
-        Note over API,DB: Dilema: Rollback indevido ou inconsistência de dados
-        API->>DB: ROLLBACK ou confirmação com perda do evento
-        API-->>Client: 500 Erro interno / Transação degradada
-    end
-    deactivate API
-```
-
-**Pros:**
-- **Simplicidade Conceitual Inicial:** Não requer criação de novas tabelas de mensageria, workers de segundo plano ou rotinas agendadas.
-- **Despacho Imediato:** A notificação parte imediatamente no instante da alteração, sem a latência imposta por ciclos de varredura.
-
-**Cons:**
-- **Degradação Grave de Performance:** A transação de atualização de pedidos (`orders`, `order_status_history` e `stock_quantity`) retém conexões e bloqueios no banco de dados enquanto aguarda a resposta da rede externa.
-- **Quebra de Confiabilidade Transacional:** Se o servidor do cliente estiver temporariamente fora do ar ou com lentidão severa, a transação local de pedido falhará ou causará reversão indevida (*rollback*) de uma operação comercial legítima.
-- **Vulnerabilidade a Efeito Cascata:** Servidores remotos degradados consomem as threads do pool da API Node.js, levando ao esgotamento rápido de recursos e indisponibilidade para todos os outros usuários da plataforma.
-- **Inexistência de Resiliência:** Não provê mecanismo viável para retentativas espaçadas com tolerância a indisponibilidades prolongadas.
-- **Rejeitada categoricamente pela engenharia**, conforme fundamentado nas diretrizes de [ADR-001: Padrão Transacional Outbox no MySQL](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md).
+### Não-Objetivos (Non-Goals)
+- **Webhooks de Entrada (*Inbound*):** Escopo restrito ao envio de notificações (*outbound*).
+- **Interface Gráfica de Usuário (Dashboard):** Toda a gestão será via API RESTful nesta fase; interfaces visuais serão tratadas futuramente pelo time de frontend.
+- **Alertas por Canais Secundários (E-mail/SMS):** Notificações ativas por e-mail para falhas sucessivas estão postergadas para etapas subsequentes.
+- **Ordenação Global Absoluta:** A ordenação é garantida por pedido (`order_id`) sob a execução de uma instância consumidora única; não há compromisso de ordenação causal entre pedidos de clientes distintos.
+- **Novos Componentes de Mensageria:** Não faz parte da proposta provisionar ou manter Apache Kafka, RabbitMQ ou clusters Redis, mantendo o ecossistema centrado no MySQL existente.
 
 ---
 
-### Approach 2: Mensageria Externa Dedicada (Redis Streams ou Apache Kafka)
+## Proposta Técnica
 
-**Description:**
+### Visão Geral da Solução
+A proposta técnica adota o padrão **Transacional Outbox no MySQL** com um **Worker desacoplado via Polling**. A solução opera em três camadas coordenadas:
 
-Nesta alternativa, a notificação de eventos é delegada a uma plataforma externa de mensageria distribuída (como Redis Streams, Apache Kafka ou RabbitMQ). Após a alteração do pedido no banco de dados relacional, o serviço publica o evento no tópico/stream correspondente, e um cluster de microsserviços consumidores consome as mensagens e dispara as requisições HTTP para os clientes.
+1. **Gravação Atômica na Origem:** Durante o método `OrderService.changeStatus`, a mesma transação relacional Prisma (`$transaction`) que atualiza o pedido e o inventário realiza a inserção de um registro na tabela `webhook_outbox`. O registro contém o identificador universal do evento (`event_id`), o status inicial `PENDING` e o retrato completo congelado (*snapshot* JSON serializado) do pedido no momento da transição, imune a mutações posteriores.
+2. **Processamento Assíncrono Desacoplado:** Um worker dedicado (`src/worker.ts`), executando em processo e ciclo de vida isolados da API web principal, executa varreduras regulares (*polling*) a cada 2 segundos na tabela `webhook_outbox`. O worker recupera lotes pequenos de eventos pendentes ordenados cronologicamente por `created_at`.
+3. **Despacho Seguro e Resiliência:** O worker despacha cada requisição HTTP POST sob HTTPS com timeout estrito de 10 segundos, calcula e injeta a assinatura `X-Signature-SHA256` (HMAC-SHA256) no cabeçalho, controla retentativas automáticas e encaminha falhas definitivas para a tabela `webhook_dead_letter`.
 
-**Architecture:**
-
-```mermaid
-flowchart LR
-    Client["Cliente / Usuário"] -->|PATCH /orders/:id/status| API["API de Pedidos - OrderService"]
-    
-    subgraph Storage["Armazenamento e Mensageria"]
-        DB[("MySQL Database<br/>orders, stock, history")]
-        Broker[("Broker Externo Dedicado<br/>Redis Streams / Kafka")]
-    end
-    
-    subgraph Consumers["Processamento Assíncrono"]
-        Worker["Consumer Dedicado"]
-    end
-    
-    subgraph External["Destinatários Externos"]
-        CustomerEndpoint["Endpoint Webhook do Cliente"]
-    end
-
-    API -->|1. Commit Transação SQL| DB
-    API -.->|2. Publicação Assíncrona - Risco de Dual-Write| Broker
-    Broker -->|3. Leitura do Stream| Worker
-    Worker -->|4. HTTP POST com HMAC| CustomerEndpoint
-```
-
-**Pros:**
-- **Alto Rendimento e Escalabilidade:** Capacidade nativa de processar dezenas de milhares de mensagens por segundo com distribuição em múltiplos grupos de consumidores (*consumer groups*).
-- **Consumo Reativo Quase Instantâneo:** Elimina o tempo morto associado a intervalos regulares de varredura ativa (*polling*).
-- **Recursos Nativos de Mensageria:** Rastreabilidade nativa de partições, deslocamentos de consumo (*offsets*) e reprocessamento por *stream*.
-
-**Cons:**
-- **O Problema da Escrita Dupla (*Dual-Write Problem*):** É computacionalmente inviável garantir consistência transacional atômica entre o commit no banco de dados MySQL e a publicação no broker sem implementar um padrão outbox adicional. Uma falha de rede pós-commit acarreta perda definitiva do evento; uma publicação anterior ao commit pode disparar eventos falsos se o banco sofrer *rollback*.
-- **Custo Operacional Excessivo:** Demanda o provisionamento, monitoramento, parametrização de alta disponibilidade e gestão de novos clusters de infraestrutura para uma equipe de engenharia reduzida.
-- **Incompatibilidade com o Prazo Contratual:** O esforço de homologação e implantação de uma infraestrutura desse porte extrapola a estimativa viável de três *sprints*, inviabilizando a entrega contratada para fim de novembro.
-- **Descarte por Sobre-engenharia (*Overengineering*)**, contrariando o princípio de parcimônia consolidado em [ADR-001](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) e [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md).
-
----
-
-### Approach 3: Padrão Transacional Outbox no MySQL com Worker Desacoplado via Polling (Recomendada)
-
-**Description:**
-
-A arquitetura recomendada adota o padrão Transacional Outbox utilizando o banco relacional MySQL existente. No fluxo de negócio de alteração de pedidos (`OrderService.changeStatus`), a mesma transação SQL atômica que persiste a transição da tabela `orders`, o registro em `order_status_history` e o débito de `stock_quantity` realiza a inserção de um registro na tabela `webhook_outbox`. 
-
-A gravação do evento registra o retrato integral e congelado dos dados (*snapshot* JSON serializado), garantindo imutabilidade caso o pedido sofra alterações futuras. Um processo desacoplado em Node.js (`src/worker.ts`), executando em ciclo de vida e processo do sistema operacional completamente independentes da API web principal, realiza consultas periódicas (*polling*) a cada 2 segundos na tabela `webhook_outbox` em busca de lotes de eventos pendentes. 
-
-O worker executa as chamadas HTTP seguras com *timeout* de 10 segundos, assina o corpo da mensagem com algoritmo HMAC-SHA256 utilizando chave exclusiva por endpoint, gerencia retentativas automáticas via *backoff* exponencial (5 tentativas cobrindo 15 horas) e move mensagens permanentemente falhas para uma tabela dedicada de *Dead Letter Queue* (`webhook_dead_letter`), viabilizando reprocessamento manual administrativo.
-
-**Architecture:**
+### Diagrama Arquitetural da Solução
 
 ```mermaid
 flowchart TD
-    subgraph APIFlow["1. Fluxo de Atualização de Pedido - API Web"]
-        User["Cliente / Operador"] -->|PATCH /orders/:id/status| OrderService["OrderService.changeStatus"]
+    subgraph APIFlow["1. Camada de Aplicação Web (API REST)"]
+        ClientUser["Cliente / Operador"] -->|PATCH /orders/:id/status| OrderService["OrderService.changeStatus"]
         
-        subgraph DBTx["Transação SQL Atômica no MySQL - ACID"]
+        subgraph DBTx["Transação SQL Atômica no MySQL (ACID)"]
             OrderService -->|1. UPDATE| OrdersTbl[("orders")]
             OrderService -->|2. INSERT| HistoryTbl[("order_status_history")]
             OrderService -->|3. UPDATE| StockTbl[("stock_quantity")]
@@ -177,102 +67,198 @@ flowchart TD
         end
     end
 
-    subgraph WorkerFlow["2. Fluxo de Processamento Assíncrono - Worker Dedicado"]
-        WorkerProcess["Worker Desacoplado src/worker.ts<br/>Polling em loop a cada 2 segundos"]
+    subgraph WorkerFlow["2. Processamento Assíncrono (Worker Dedicado src/worker.ts)"]
+        WorkerProcess["Worker em Loop de Polling (2s)<br/>Processo Node.js Isolado"]
         WorkerProcess -->|Lê lote PENDING ordenado por created_at| OutboxTbl
-        WorkerProcess -->|Calcula Assinatura HMAC-SHA256| SecurityModule["Módulo de Segurança e Criptografia"]
-        SecurityModule -->|Headers: X-Event-Id, X-Signature, X-Timestamp, X-Webhook-Id| RemoteCustomer["Endpoint HTTPS do Cliente<br/>Atlas, MaxDistribuição, Nova Cargo"]
+        WorkerProcess -->|Gera HMAC-SHA256 com secret do endpoint| SecurityModule["Módulo de Criptografia"]
+        SecurityModule -->|HTTP POST com X-Event-Id e X-Signature| RemoteEndpoint["Endpoint HTTPS do Cliente<br/>(Atlas, MaxDistribuição, Nova Cargo)"]
         
-        RemoteCustomer -->|Sucesso HTTP 2xx| DeliverySuccess["Marca evento como DELIVERED<br/>Expurgo planejado em 30 dias"]
-        DeliverySuccess --> OutboxTbl
+        RemoteEndpoint -->|HTTP 2xx Sucesso| MarkDelivered["Marca evento como DELIVERED<br/>Expurgo agendado após 30 dias"]
+        MarkDelivered --> OutboxTbl
         
-        RemoteCustomer -->|Falha HTTP ou Timeout 10s| RetryCheck{"Tentativas menores que 5?<br/>1m, 5m, 30m, 2h, 12h"}
-        RetryCheck -->|Sim| ScheduleRetry["Incrementa retry_count<br/>Define next_retry_at"]
-        ScheduleRetry --> OutboxTbl
-        RetryCheck -->|Não - Esgotado após 15h| DeadLetterQueue[("webhook_dead_letter<br/>Tabela DLQ Segregada")]
+        RemoteEndpoint -->|Falha HTTP ou Timeout 10s| RetryEvaluation{"Tentativas < 5?<br/>(1m, 5m, 30m, 2h, 12h)"}
+        RetryEvaluation -->|Sim| ScheduleNextRetry["Incrementa retry_count<br/>Define next_retry_at"]
+        ScheduleNextRetry --> OutboxTbl
+        RetryEvaluation -->|Não - Esgotado (~15h)| MoveToDLQ[("webhook_dead_letter<br/>Tabela DLQ Segregada")]
     end
 
-    subgraph ManagementFlow["3. Gestão e Reprocessamento Administrativo"]
-        AdminActor["Administrador do Sistema"] -->|POST /admin/webhooks/dead-letter/:id/replay| AdminController["Admin Webhook Controller<br/>Validação de Role ADMIN e Log Auditoria"]
-        AdminController -->|Reinsere como PENDING| OutboxTbl
+    subgraph AdminFlow["3. Governança e Reprocessamento"]
+        AdminUser["Administrador"] -->|POST /admin/webhooks/dead-letter/:id/replay| AdminEndpoint["Admin Controller (requireRole ADMIN)"]
+        AdminEndpoint -->|Reinsere na outbox como PENDING| OutboxTbl
     end
 ```
 
-**Pros:**
-- **Atomicidade e Consistência Estrita:** Elimina o risco de escrita dupla. A criação do evento de notificação e o commit da alteração do pedido ocorrem sob o mesmo isolamento ACID relacional.
-- **Desacoplamento Operacional Total:** Falhas de rede, manutenções ou lentidões em sistemas externos não impactam o tempo de resposta ou a disponibilidade do encadeamento principal de pedidos.
-- **Aderência Plena aos Requisitos de Negócio:** O ciclo de varredura a cada 2 segundos atende com ampla folga ao requisito contratual de latência inferior a 10 segundos.
-- **Eficiência e Confiabilidade de Entrega:** O modelo de entrega *at-least-once* assegura retenção contra falhas transitórias de rede, delegando a idempotência ao receptor mediante uso obrigatório do cabeçalho `X-Event-Id`.
-- **Governança de Falhas e Observabilidade:** Segregação de eventos exauridos na tabela `webhook_dead_letter`, permitindo análise de causas de erro e *replay* administrativo controlado.
-- **Segurança Criptográfica de Ponta a Ponta:** Assinatura HMAC-SHA256 vinculada a credencial individual por endpoint com política suave de rotação de 24 horas, protegendo o canal contra personificação e ataques de repetição.
-- **Simplicidade de Infraestrutura e Cumprimento de Prazo:** Reaproveita as tecnologias já consolidadas na base de código (Node.js, MySQL, Prisma ORM, Pino, Zod, AppError), possibilitando a conclusão segura do desenvolvimento em 3 *sprints*.
-
-**Cons:**
-- **Latência Residual de Polling:** Impõe uma latência de trânsito base de 0 a 2 segundos antes do início do despacho, o que é perfeitamente tolerável para o caso de uso.
-- **Carga de Leitura Regular no Banco de Dados:** O *polling* periódico de 2 segundos executa leituras contínuas na tabela `webhook_outbox`, mitigadas pelo uso de índices otimizados em `status` e `created_at`, consumo em lotes enxutos e expurgo programado após 30 dias.
-- **Ordenação Restrita a Instância Única de Worker:** A garantia de ordenação sequencial por pedido (`order_id`) é assegurada sob o modelo de worker único (*single-worker*). A evolução para múltiplos nós consumidores em paralelo exigirá estratégias complementares de particionamento.
+### Componentes e Padrões Arquiteturais Incorporados
+- **Isolamento de Processos:** Separação entre `src/server.ts` (API pública) e `src/worker.ts` (consumidor assíncrono), garantindo que picos de chamadas externas ou falhas de rede de terceiros não saturem o loop de eventos da API.
+- **Contrato de Cabeçalhos Padronizados:** Cada webhook trafega com `X-Event-Id` (idempotência), `X-Signature-SHA256` (integridade e autenticidade), `X-Timestamp` (proteção contra repetição) e `X-Webhook-Id` (identificador do endpoint).
+- **Reaproveitamento dos Padrões da Codebase:** Alinhamento estrito com as práticas existentes do projeto: estrutura modular em `src/modules/webhooks`, tratamento uniforme de exceções via `AppError`, logs estruturados com identificador de correlação via biblioteca Pino e validação declarativa de schemas via Zod.
 
 ---
 
-### Recommendation
+## Alternativas Consideradas
 
-**Chosen approach:** Approach 3 — Padrão Transacional Outbox no MySQL com Worker Desacoplado via Polling.
+### Alternativa 1: Disparo Síncrono no Fluxo de Atualização do Pedido (Rejeitada)
 
-**Justification:**
+**Descrição:**  
+A requisição HTTP de notificação é disparada síncronamente logo após a gravação das tabelas de pedidos, dentro do mesmo método de execução do serviço de domínio (`OrderService.changeStatus`).
 
-A **Approach 3** é a única solução capaz de equilibrar com excelência as restrições estritas de prazo contratual (fim de novembro de 2026 / três *sprints*), as metas técnicas de confiabilidade transacional atômica e os recursos operacionais de uma equipe enxuta. 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Cliente / Usuário
+    participant API as API de Pedidos (OrderService)
+    participant DB as MySQL (orders, stock, history)
+    participant Remote as Endpoint do Cliente
+    
+    Client->>API: PATCH /orders/:id/status
+    activate API
+    API->>DB: Inicia Transação SQL
+    API->>DB: UPDATE orders, stock & INSERT history
+    Note over API,Remote: Conexões e locks SQL retidos aguardando rede externa
+    API->>Remote: POST Webhook Payload (HTTP Síncrono)
+    activate Remote
+    alt Destinatário responde 200 OK no tempo
+        Remote-->>API: 200 OK
+        API->>DB: COMMIT da Transação
+        API-->>Client: 200 OK
+    else Destinatário fora do ar ou com lentidão severa
+        Remote--xAPI: Timeout de 10s ou Erro 5xx
+        deactivate Remote
+        Note over API,DB: Falso Dilema: Rollback indevido ou inconsistência de dados
+        API->>DB: ROLLBACK ou confirmação com perda da notificação
+        API-->>Client: 500 Erro de Integração
+    end
+    deactivate API
+```
 
-A abordagem de disparo síncrono (Approach 1) foi sumariamente rejeitada por violar princípios fundamentais de isolamento de falhas, enquanto a introdução de uma plataforma dedicada de mensageria externa (Approach 2) incorreria no complexo problema da escrita dupla, demandaria tempo de provisionamento inviável e violaria o princípio de parcimônia tecnológica.
+**Prós:**
+- Simplicidade inicial de implementação, sem necessidade de novas tabelas ou workers em segundo plano.
+- Entrega imediata em condições ideais de rede.
 
-Ao adotar a **Approach 3**, a engenharia assume deliberadamente a responsabilidade de gerenciar o ciclo de vida da tabela outbox e aceita uma latência intrínseca de até 2 segundos vinculada ao intervalo de *polling*, reconhecendo que essa latência situa-se com ampla folga dentro do limiar de 10 segundos contratado. 
-
-Essa decisão está integralmente embasada e formalizada no conjunto de registros de decisão arquitetural do projeto:
-- [ADR-001: Padrão Transacional Outbox no MySQL](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Fundamenta a consistência atômica e eliminação de escrita dupla na persistência relacional.
-- [ADR-002: Worker Desacoplado via Polling](/docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Estabelece a segregação de processo (`src/worker.ts`), intervalo de 2 segundos e modelo de ordenação por pedido.
-- [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](/docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Define o contrato de retransmissão e a desduplicação na ponta receptora via cabeçalho `X-Event-Id`.
-- [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](/docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Fixa a progressão de 5 tentativas (~15h), a tabela de mensagens mortas e o endpoint administrativo de *replay*.
-- [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](/docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Normatiza a segurança da camada de aplicação com assinatura criptográfica, segredos individuais, tolerância de 24h para rotação e *timeout* de 10s.
-- [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Consolida a padronização modular (`src/modules/webhooks`), tipagem de erros (`WEBHOOK_*`), esquemas declarativos Zod e registros Pino.
+**Contras e Motivo do Descarte:**
+- **Acoplamento Temporal Crítico:** Retém conexões ativas do pool do banco de dados e bloqueios de linha (*row locks*) enquanto aguarda servidores de terceiros.
+- **Vulnerabilidade a Falhas em Cascata:** Um cliente lento consome as threads do servidor Node.js, degradando o tempo de resposta da API para todos os demais usuários da plataforma.
+- **Inconsistência Transacional:** Na hipótese de timeout remoto, o sistema é forçado a escolher entre cancelar uma operação comercial válida de pedido ou persistir o pedido sem qualquer registro ou garantia de envio da notificação.
+- **Descarte:** Rejeitada formalmente por violar a resiliência e a estabilidade da plataforma, conforme fundamentado na [ADR-001: Padrão Transacional Outbox no MySQL](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md).
 
 ---
 
-## Open Questions
+### Alternativa 2: Mensageria Externa Dedicada — Redis Streams ou Apache Kafka (Rejeitada)
+
+**Descrição:**  
+Após o commit no banco relacional, o serviço de pedidos publica o evento em uma fila ou tópico externo dedicado (Redis Streams, Apache Kafka ou RabbitMQ). Um cluster de microsserviços consumidores consome o fluxo de mensagens e efetua os disparos externos.
+
+```mermaid
+flowchart LR
+    Client["Cliente"] -->|PATCH /orders/:id/status| API["OrderService"]
+    subgraph Storage["Armazenamento & Mensageria"]
+        DB[("MySQL Database")]
+        Broker[("Broker Externo Dedicado<br/>Redis Streams / Kafka")]
+    end
+    API -->|1. Commit SQL| DB
+    API -.->|2. Publicação Assíncrona (Dual-Write)| Broker
+    Broker -->|3. Consumo Reativo| Worker["Consumer Pool"]
+    Worker -->|4. HTTP POST| RemoteEndpoint["Endpoint do Cliente"]
+```
+
+**Prós:**
+- Altíssima capacidade de vazão (dezenas de milhares de eventos por segundo) com latência reativa de milissegundos.
+- Deslocamento de offsets e balanceamento de carga nativos por grupos de consumidores (*consumer groups*).
+
+**Contras e Motivo do Descarte:**
+- **Problema da Escrita Dupla (*Dual-Write Problem*):** Não é possível garantir transacionalidade atômica entre o commit no MySQL e a publicação na rede externa sem um mecanismo intermediário de outbox. Falhas de rede pós-commit geram eventos perdidos; publicações pré-commit geram notificações fantasmas se o banco sofrer *rollback*.
+- **Complexidade Operacional e Custo:** Introduz a necessidade de homologação, provisionamento, configuração de alta disponibilidade e monitoramento de uma nova plataforma distribuída para uma equipe de engenharia enxuta.
+- **Inviabilidade de Cronograma:** O esforço operacional extrapola o limite de três *sprints*, tornando impossível a entrega contratual até o fim de novembro de 2026.
+- **Descarte:** Rejeitada por sobre-engenharia (*overengineering*) e descumprimento de prazos, conforme consolidado na [ADR-001](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) e na [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md).
+
+---
+
+## Impacto e Riscos
+
+A adoção do padrão Transacional Outbox com processamento assíncrono via Polling foi selecionada como a melhor solução para o contexto da empresa. Contudo, essa escolha impõe impactos específicos e riscos operacionais que devem ser compreendidos, monitorados e mitigados:
+
+### 1. Sobrecarga e Contenção no Banco de Dados Relacional (MySQL)
+- **Impacto e Risco:** O ciclo de polling a cada 2 segundos submete a tabela `webhook_outbox` a 30 consultas por minuto, mesmo quando não houver novos eventos a processar. O crescimento contínuo do histórico de eventos pode gerar degradação de performance por inchaço da tabela (*table bloat*) e lentidão nas consultas do worker, competindo por conexões e memória com as tabelas transacionais de pedidos e estoque.
+- **Mitigações Arquiteturais:**
+  - Criação de índice composto específico e altamente seletivo: `idx_outbox_polling (status, next_retry_at, created_at)`. Esse índice assegura que a consulta de varredura opere em milissegundos via busca de índice (*index seek*), sem causar varredura de tabela (*table scan*).
+  - Consulta estritamente limitada em pequenos lotes (`LIMIT 50`) por ciclo de polling, prevenindo picos de consumo de memória no Node.js.
+  - Separação de pools de conexões do Prisma entre o worker e a API web, evitando contenção de conexões para as requisições dos usuários.
+  - Implementação de rotina programada de arquivamento/expurgo de eventos que permaneçam no estado `DELIVERED` há mais de 30 dias.
+
+### 2. Latência Intrínseca de Polling vs. SLA Contratual
+- **Impacto e Risco:** Diferente de uma esteira reativa baseada em eventos (milissegundos), o polling regular introduz um tempo de espera intrínseco de 0 a 2 segundos (média de 1 segundo) antes de o worker identificar e iniciar o despacho da notificação.
+- **Mitigações Arquiteturais:**
+  - Conforme modelagem matemática de latência ($t_{\text{total}} = t_{\text{transação}} + t_{\text{polling}} + t_{\text{cripto}} + t_{\text{rede}}$), o tempo total ponta a ponta no pior caso de coincidência de ciclo não ultrapassa 4 segundos.
+  - A latência observada atende com ampla folga à meta de latência de 10 segundos acordada com Atlas Comercial, MaxDistribuição e Nova Cargo, configurando um trade-off favorável de engenharia.
+
+### 3. Escalabilidade Concorrente e Garantia de Ordenação de Eventos
+- **Impacto e Risco:** Na fase inicial, a infraestrutura operará com uma única instância consumidora (*single-worker*), o que garante de forma natural e sequencial a ordem de despacho por `created_at`. No entanto, caso a volumetria cresça a ponto de exigir a execução de múltiplos workers em paralelo no futuro, sem um mecanismo de partição, múltiplos processos concorrentes disputarão os mesmos registros, gerando condição de corrida (*race condition*) e risco de entrega desordenada (ex: o evento `SHIPPED` chegar ao cliente antes de `PAID`).
+- **Mitigações Arquiteturais:**
+  - O dimensionamento para o primeiro trimestre confirma que um worker único em loop de 2s processa com tranquilidade o volume projetado de dezenas de milhares de eventos diários.
+  - Para a evolução de longo prazo, a arquitetura prevê a evolução para consumo particionado por chave (*hash* de `order_id`) ou uso de locks pessimistas com `SELECT ... FOR UPDATE SKIP LOCKED`, garantindo paralelismo sem violação de ordenação por pedido.
+
+### 4. Gestão da Dead Letter Queue (DLQ) e Acúmulo Silencioso de Falhas
+- **Impacto e Risco:** Se um parceiro permanecer com seu endpoint inoperante por tempo superior à janela de retentativas (~15 horas), seus eventos serão transferidos para a tabela `webhook_dead_letter`. O acúmulo desassistido de registros na DLQ pode causar impacto nas integrações dos clientes sem que a engenharia tome ciência imediata.
+- **Mitigações Arquiteturais:**
+  - Disparo de log estruturado via biblioteca Pino com severidade `ERROR` e atributos de contexto (`event_id`, `endpoint_url`, `attempts`, `last_error`) no momento em que a quinta tentativa falhar e o registro for movido para a DLQ.
+  - Disponibilização de endpoint administrativo de auditoria e *replay* manual (`POST /admin/webhooks/dead-letter/:id/replay`), devidamente blindado pelo middleware de autorização restrito ao perfil `ADMIN`.
+  - Histórico transparente de tentativas mantido em `webhook_deliveries` para diagnóstico imediato de erros HTTP e timeouts.
+
+### 5. Risco de Sobrecarga em Clientes por Ausência de Rate Limiting de Saída
+- **Impacto e Risco:** Em momentos de processamento em lote interno (ex: importação de planilha de pagamentos aprovando 50 pedidos no mesmo segundo), o worker processará todos os eventos pendentes e efetuará dezenas de requisições simultâneas para o mesmo destinatário, correndo o risco de sobrecarregar servidores de clientes menos preparados.
+- **Mitigações Arquiteturais:**
+  - O timeout de saída fixado em 10 segundos e o consumo em lotes de até 50 eventos atuam como amortecedores naturais.
+  - A equipe acompanhará ativamente o comportamento volumétrico no primeiro mês de produção para avaliar a introdução oportuna de controle de taxa de saída baseado em algoritmo de *Token Bucket* por endpoint (mantido como Questão em Aberto 1).
+
+### 6. Semântica At-Least-Once e Risco de Duplicatas no Cliente
+- **Impacto e Risco:** Diante de instabilidades de rede (ex: o cliente recebe a requisição, processa com sucesso, mas a resposta HTTP 200 sofre timeout ou queda de conexão antes de chegar ao worker), o worker assumirá falha e agendará uma retentativa legítima, resultando em entrega duplicada.
+- **Mitigações Arquiteturais:**
+  - Envio obrigatório e invariável do cabeçalho `X-Event-Id` contendo o UUID original e imutável do evento gravado na outbox.
+  - Formalização contratual e técnica de que a responsabilidade pela desduplicação idempotente cabe ao cliente receptor, com recomendação expressa de retenção do histórico de `X-Event-Id` por pelo menos 24 horas.
+
+---
+
+## Questões em Aberto
 
 1. **Monitoramento e Controle de Vazão de Saída (*Outbound Rate Limiting*):**  
-   *Contexto:* Durante a reunião técnica, Diego levantou a preocupação de que um cliente corporativo com grande volume de operações simultâneas (ex: 50 pedidos alterando de estado no mesmo minuto) seja sobrecarregado por uma rajada repentina de requisições disparadas pelo worker.  
-   *Inclinação da Equipe:* Na fase inicial, não será implementado limitador de taxa de envio para não sobrecarregar o cronograma de desenvolvimento. A equipe observará o comportamento volumétrico real em produção e avaliará a introdução de algoritmos de controle de vazão (como *Token Bucket* ou *Leaky Bucket* por cliente) caso sejam detectadas instabilidades nos destinatários.
+   *Contexto:* Durante a reunião técnica, Diego apontou a preocupação de que clientes com grandes picos simultâneos de pedidos (ex: 50 pedidos transitando de estado simultaneamente) sofram sobrecarga com uma rajada de disparos em sequência.  
+   *Inclinação da Equipe:* Na primeira fase, não será implementado limitador de taxa para preservar o cronograma de desenvolvimento. O tráfego real será monitorado em produção e, caso sejam observadas instabilidades nos destinatários, implementará-se um mecanismo de vazão (algoritmo *Token Bucket* por endpoint) no worker.
 
 2. **Notificação Proativa de Clientes por Falha Recorrente (Alertas via E-mail):**  
-   *Contexto:* Marcos questionou sobre a possibilidade de disparar um aviso por e-mail para o suporte técnico do cliente caso seu endpoint apresente falhas consecutivas de recebimento (ex: 3 falhas seguidas).  
-   *Inclinação da Equipe:* A funcionalidade foi classificada como fora de escopo para a entrega corrente, preservando o foco estrito na resiliência do motor de webhooks. A equipe reavaliará a integração com o provedor de e-mail na etapa subsequente, após a consolidação da estabilidade operacional da funcionalidade.
+   *Contexto:* Marcos questionou a viabilidade de disparar e-mails automáticos ao suporte técnico do cliente caso seu endpoint registre 3 falhas consecutivas de entrega.  
+   *Inclinação da Equipe:* O recurso foi considerado fora de escopo para a entrega corrente. A equipe manterá o foco na resiliência e na DLQ nesta primeira etapa e avaliará a integração com provedores de mensageria eletrônica no ciclo seguinte à estabilização.
 
 3. **Escalabilidade Horizontal do Worker e Preservação de Ordenação Estrita:**  
-   *Contexto:* Larissa e Bruno discutiram a garantia de entrega na ordem exata quando um pedido transita rapidamente por múltiplos estados (`PAID` -> `PROCESSING` -> `SHIPPED`). Atualmente, essa ordenação é garantida de forma implícita pela execução de um único worker consumindo a tabela sequencialmente por `created_at`.  
-   *Inclinação da Equipe:* A infraestrutura iniciará sua operação em ambiente de produção utilizando um *single-worker*. Caso o incremento de volume demande paralelização em múltiplos processos consumidores no futuro, a arquitetura evoluirá para a partição determinística de lotes via *hash* de `order_id` ou mecanismos de bloqueio pessimista (*row locking*) no banco de dados.
+   *Contexto:* Larissa e Bruno debateram como garantir que pedidos que mudem de estado em sucessão rápida (`PAID` -> `PROCESSING` -> `SHIPPED`) não tenham seus eventos entregues fora de ordem caso o processamento passe a rodar com múltiplos workers em paralelo.  
+   *Inclinação da Equipe:* O sistema iniciará a operação produtiva em modelo de instância única (*single-worker*), que garante ordenação natural e sequencial por `created_at`. Caso haja expansão futura de volume, a arquitetura migrará para partição determinística via *hash* de `order_id` ou uso de `SELECT ... FOR UPDATE SKIP LOCKED` no MySQL.
 
 4. **Granularidade das Permissões de Acesso para Configuração de Webhooks:**  
-   *Contexto:* Sofia destacou a obrigatoriedade de restringir a rota de reprocessamento da DLQ exclusivamente ao perfil `ADMIN`. Marcos e Bruno debateram se os endpoints de criação e manutenção cadastral de webhooks deveriam exigir perfis específicos.  
-   *Inclinação da Equipe:* O CRUD cadastral de endpoints de clientes será acessível a qualquer usuário autenticado com credencial válida vinculada à organização receptora. O endurecimento de permissões com papéis granulares de integração será reavaliado conforme as demandas de conformidade e governança dos clientes amadurecerem.
+   *Contexto:* Sofia defendeu que a rota de reprocessamento da DLQ fosse estritamente exclusiva ao perfil `ADMIN`. Marcos e Bruno discutiram se o cadastro e gerenciamento diário de webhooks deveriam exigir papéis diferenciados.  
+   *Inclinação da Equipe:* O CRUD cadastral de endpoints será aberto a qualquer usuário autenticado com permissão na organização parceira. A restrição rígida aplica-se à rota de *replay* da DLQ (`requireRole('ADMIN')`). A criação de papéis mais granulares para integração técnica será revista de acordo com o feedback de conformidade dos clientes.
 
 ---
 
-## References
+## Decisões Relacionadas (ADRs)
 
-- **Registros de Decisões de Arquitetura (ADRs do Projeto):**
-  - [ADR-001: Padrão Transacional Outbox no MySQL](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Decisão sobre persistência atômica na transação do banco relacional existente.
-  - [ADR-002: Worker Desacoplado via Polling](/docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Decisão sobre execução de worker independente em processo dedicado e intervalo de polling de 2 segundos.
-  - [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](/docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Decisão sobre semântica de entrega e desduplicação via cabeçalho `X-Event-Id`.
-  - [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](/docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Decisão sobre política de 5 tentativas (~15h), segregação de falhas permanentes em tabela DLQ e rota de replay com role ADMIN.
-  - [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](/docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Decisão sobre assinatura criptográfica por endpoint, rotação de 24h, limite de 64KB e obrigatoriedade de HTTPS.
-  - [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Decisão sobre reaproveitamento de componentes transversais, padrão modular (`src/modules/webhooks`) e prefixo `WEBHOOK_`.
+A proposta arquitetural consolidada nesta RFC fundamenta-se nas seguintes decisões formais de arquitetura do projeto:
 
-- **Transcrição e Insumos da Reunião Técnica:**
-  - [TRANSCRICAO.md](/TRANSCRICAO.md) — Transcrição integral da reunião de alinhamento técnico entre Larissa, Marcos, Bruno, Diego e Sofia realizada em quinta-feira às 09:00.
+- [ADR-001: Padrão Transacional Outbox no MySQL](/docs/adrs/ADR-001-padrao-transacional-outbox-no-mysql.md) — Estabelece a persistência atômica do evento na mesma transação relacional do pedido, eliminando a inconsistência de escrita dupla.
+- [ADR-002: Worker Desacoplado via Polling](/docs/adrs/ADR-002-worker-desacoplado-via-polling.md) — Define a segregação operacional do worker assíncrono em processo Node.js dedicado (`src/worker.ts`) e o intervalo de consulta periódica de 2 segundos.
+- [ADR-003: Garantia de Entrega At-Least-Once com Desduplicação por Event ID](/docs/adrs/ADR-003-garantia-entrega-at-least-once-com-desduplicacao-event-id.md) — Normatiza o contrato de retransmissão de eventos e a delegação de desduplicação idempotente na ponta receptora via `X-Event-Id`.
+- [ADR-004: Política de Retry com Backoff Exponencial e Tabela DLQ Dedicada](/docs/adrs/ADR-004-politica-retry-backoff-exponencial-tabela-dlq.md) — Especifica a progressão matemática de 5 tentativas de retentativa (~15h), o transbordo para a tabela de mensagens mortas e a rota de *replay* administrativo restrita a `ADMIN`.
+- [ADR-005: Autenticação e Integridade via HMAC-SHA256 com Secret por Endpoint](/docs/adrs/ADR-005-autenticacao-integridade-hmac-sha256-secret-por-endpoint.md) — Padroniza a segurança criptográfica via cabeçalho `X-Signature-SHA256`, chaves exclusivas por webhook, suporte a rotação com carência de 24 horas e timeout de 10 segundos.
+- [ADR-006: Reaproveitamento Integral dos Padrões da Codebase](/docs/adrs/ADR-006-reaproveitamento-padroes-codebase.md) — Garante a aderência às convenções arquiteturais existentes do sistema: padrão modular sob `src/modules/webhooks`, tipagem de erros `AppError` com prefixo `WEBHOOK_*`, esquemas declarativos Zod e registros estruturados Pino.
 
-- **Componentes e Padrões da Codebase Referenciados:**
-  - `src/server.ts` — Ponto de entrada da API HTTP principal.
-  - `src/config/database.ts` — Configuração do cliente e pool de conexões do Prisma ORM.
-  - `src/middlewares/auth.middleware.ts` — Implementação do middleware de autenticação JWT e validação de papéis (`requireRole`).
-  - `src/middlewares/error.middleware.ts` — Interceptador centralizado de exceções (`AppError`, Zod, Prisma).
-  - `src/shared/errors/app-error.ts` — Classe base para erros operacionais tipados da aplicação.
-  - `src/shared/logger/index.ts` — Utilitário central de logging estruturado baseado na biblioteca Pino.
+---
+
+## Referências Complementares
+
+- **Transcrição da Reunião Técnica:**
+  - [TRANSCRICAO.md](/TRANSCRICAO.md) — Registro integral dos alinhamentos entre Larissa, Marcos, Bruno, Diego e Sofia.
+- **Componentes Centrais da Base de Código:**
+  - `src/server.ts` — Ponto de inicialização do servidor HTTP Express.
+  - `src/config/database.ts` — Inicialização do pool de conexões e cliente do Prisma ORM.
+  - `src/middlewares/auth.middleware.ts` — Middlewares de autenticação JWT e validação de papéis (`authenticate`, `requireRole`).
+  - `src/middlewares/error.middleware.ts` — Interceptador global de exceções para tratamento padronizado de erros.
+  - `src/shared/errors/app-error.ts` — Classe base para lançamento de erros operacionais tipados da aplicação.
+  - `src/shared/logger/index.ts` — Utilitário de logging estruturado assíncrono baseado no Pino.
